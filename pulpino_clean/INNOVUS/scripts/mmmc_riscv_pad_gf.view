@@ -1,0 +1,29 @@
+# Version:1.0 MMMC View Definition File
+# Do Not Remove Above Line
+
+# RC Corners
+create_rc_corner -name rctyp_corner
+create_rc_corner -name rcmin_corner 
+create_rc_corner -name rcmax_corner 
+
+# Library Sets
+create_library_set -name ccs_lib_tc -timing "${CCS_LIB_FILES_TC} ${LIB_FILES_TC}"
+create_library_set -name ccs_lib_bc -timing "${CCS_LIB_FILES_BC} ${LIB_FILES_BC}"
+create_library_set -name ccs_lib_wc -timing "${CCS_LIB_FILES_WC} ${LIB_FILES_WC}"
+
+# Delay Corners
+create_delay_corner -name delay_mode_tc -library_set {ccs_lib_tc} -rc_corner {rctyp_corner}
+create_delay_corner -name delay_mode_bc -library_set {ccs_lib_bc} -rc_corner {rcmin_corner}
+create_delay_corner -name delay_mode_wc -library_set {ccs_lib_wc} -rc_corner {rcmax_corner}
+
+# CONSTRAINTS
+create_constraint_mode -name constraints_func -sdc_files ${CONSTRAINTS_TC}
+
+# ANALYSIS VIEWS
+create_analysis_view -name func_view_tc -constraint_mode {constraints_func} -delay_corner {delay_mode_tc}
+create_analysis_view -name func_view_bc -constraint_mode {constraints_func} -delay_corner {delay_mode_bc}
+create_analysis_view -name func_view_wc -constraint_mode {constraints_func} -delay_corner {delay_mode_wc}
+
+# The analysis view has to be defined here, as the design is otherwise not loaded in timing driven mode
+# Not sure, because the first view given is the default one -> therefore should be worst case for setup
+set_analysis_view  -setup {func_view_wc func_view_tc} -hold {func_view_bc func_view_tc}

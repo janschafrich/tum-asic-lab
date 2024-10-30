@@ -1,0 +1,8 @@
+*.o
+*.d
+*.lst
+*.elf
+*.map
+*.srec
+compile/slm/*
+*.bin
