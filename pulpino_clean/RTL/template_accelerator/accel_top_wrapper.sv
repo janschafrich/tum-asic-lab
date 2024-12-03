@@ -26,14 +26,14 @@ module accel_top_wrapper
     input   logic                   testmode_i,
     output  logic                   done,
 
-    input logic                     axi_mem_req  ,
-    input logic[INT_ADDR_WIDTH-1:0] axi_mem_addr ,
-    input logic                     axi_mem_we   ,
-    input logic[DATA_WIDTH/8-1:0]   axi_mem_be   ,
-    input logic[DATA_WIDTH-1:0]     axi_mem_rdata,
-    input logic[DATA_WIDTH-1:0]     axi_mem_wdata
+    // input logic                     axi_mem_req  ,
+    // input logic[INT_ADDR_WIDTH-1:0] axi_mem_addr ,
+    // input logic                     axi_mem_we   ,
+    // input logic[DATA_WIDTH/8-1:0]   axi_mem_be   ,
+    // input logic[DATA_WIDTH-1:0]     axi_mem_rdata,
+    // input logic[DATA_WIDTH-1:0]     axi_mem_wdata
 
-    // AXI_BUS.Slave                   axi_slave
+    AXI_BUS.Slave                   axi_slave
 );
 
 
@@ -64,14 +64,14 @@ module accel_top_wrapper
 
 
     // Bus from AXI to Memory
-    // logic                       axi_mem_req;
+    logic                       axi_mem_req;
     logic                       axi_mem_en;
     logic [INT_ADDR_WIDTH-1:0]  axi_mem_addr_tmp;
-    // logic [INT_ADDR_WIDTH-1:0]  axi_mem_addr;
-    // logic                       axi_mem_we;
-    // logic [DATA_WIDTH/8-1:0]    axi_mem_be;
-    // logic [DATA_WIDTH-1:0]      axi_mem_wdata;
-    // logic [DATA_WIDTH-1:0]      axi_mem_rdata;
+    logic [INT_ADDR_WIDTH-1:0]  axi_mem_addr;
+    logic                       axi_mem_we;
+    logic [DATA_WIDTH/8-1:0]    axi_mem_be;
+    logic [DATA_WIDTH-1:0]      axi_mem_wdata;
+    logic [DATA_WIDTH-1:0]      axi_mem_rdata;
 
     logic [DATA_WIDTH-1:0]      axi_mem_rdata_acc;
 
@@ -177,30 +177,30 @@ module accel_top_wrapper
     //////////////////////////////////////////////////////////////////////////////////////
     // AXI to memory bus conversion
     //////////////////////////////////////////////////////////////////////////////////////
-    // axi_mem_if_SP_wrap
-    // #(
-    //   .AXI_ADDR_WIDTH  ( AXI_ADDR_WIDTH         ),
-    //   .AXI_DATA_WIDTH  ( DATA_WIDTH             ),
-    //   .AXI_ID_WIDTH    ( AXI_ID_WIDTH           ),
-    //   .AXI_USER_WIDTH  ( AXI_USER_WIDTH         ),
-    //   .MEM_ADDR_WIDTH  ( INT_ADDR_WIDTH         )
-    // )
-    // axi_mem_if
-    // (
-    //     .clk         ( clk              ),
-    //     .rst_n       ( rst_n            ),
-    //     .test_en_i   ( testmode_i       ),
+    axi_mem_if_SP_wrap
+    #(
+      .AXI_ADDR_WIDTH  ( AXI_ADDR_WIDTH         ),
+      .AXI_DATA_WIDTH  ( DATA_WIDTH             ),
+      .AXI_ID_WIDTH    ( AXI_ID_WIDTH           ),
+      .AXI_USER_WIDTH  ( AXI_USER_WIDTH         ),
+      .MEM_ADDR_WIDTH  ( INT_ADDR_WIDTH         )
+    )
+    axi_mem_if
+    (
+        .clk         ( clk              ),
+        .rst_n       ( rst_n            ),
+        .test_en_i   ( testmode_i       ),
 
-    //     .mem_req_o   ( axi_mem_req      ),
-    //     .mem_addr_o  ( axi_mem_addr_tmp ),
-    //     .mem_we_o    ( axi_mem_we       ),
-    //     .mem_be_o    ( axi_mem_be       ),
-    //     .mem_rdata_i ( axi_mem_rdata    ),
-    //     .mem_wdata_o ( axi_mem_wdata    ),
+        .mem_req_o   ( axi_mem_req      ),
+        .mem_addr_o  ( axi_mem_addr_tmp ),
+        .mem_we_o    ( axi_mem_we       ),
+        .mem_be_o    ( axi_mem_be       ),
+        .mem_rdata_i ( axi_mem_rdata    ),
+        .mem_wdata_o ( axi_mem_wdata    ),
 
-    //     .slave       ( axi_slave        )
-    // );
-    // assign axi_mem_addr = {axi_mem_addr_tmp[INT_ADDR_WIDTH-ALIGN_BITS-1:0], {ALIGN_BITS{1'b0}}};;
+        .slave       ( axi_slave        )
+    );
+    assign axi_mem_addr = {axi_mem_addr_tmp[INT_ADDR_WIDTH-ALIGN_BITS-1:0], {ALIGN_BITS{1'b0}}};;
 
 
     //////////////////////////////////////////////////////////////////////////////////////
