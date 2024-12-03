@@ -10,8 +10,8 @@ module config_reg
     parameter ASYNC_READ        = 0,
     parameter ADDR_WIDTH        = 32,
     parameter DATA_WIDTH        = 32,
-    parameter N_CTRL_WORDS      = 2,
-    parameter N_STAT_WORDS      = 2,
+    parameter N_CTRL_WORDS      = 4,        // at least one - written to by CPU
+    parameter N_STAT_WORDS      = 4,        // at least one - read by CPU
     parameter REGISTER_STATUS   = 0
 )(
     // Clock and Reset

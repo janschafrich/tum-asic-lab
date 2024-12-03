@@ -14,8 +14,8 @@ module tb_accelerator_wrapper
     localparam INT_ADDR_WIDTH   = 20;   // internal accelerator address width
     localparam DATA_WIDTH       = 32;   // data width of whole system
 
-    localparam CTRL_WORDS       = 1;    // number of control words
-    localparam STAT_WORDS       = 3;    // number of status words
+    localparam CTRL_WORDS       = 4;    // number of control words
+    localparam STAT_WORDS       = 4;    // number of status words
     localparam MAX_CNT_ADDR     = 64;   // max data memory address
     localparam INCREMENT        = 1;    // Adder increment
     localparam DEPTH            = 256;  // data memory depth
@@ -24,6 +24,7 @@ module tb_accelerator_wrapper
     localparam MAX_WORDS        = (CTRL_WORDS > STAT_WORDS) ? CTRL_WORDS : STAT_WORDS;
     localparam MAX_WORD_BITS    = (MAX_WORDS > 1) ? $clog2(MAX_WORDS) : 1;
 
+    // memory map
     localparam CTRL_BASE_ADDR   = 0;
     localparam STAT_BASE_ADDR   = CTRL_WORDS;
     localparam DATA_BASE_ADDR   = 1 << (INT_ADDR_WIDTH-1);
@@ -40,7 +41,7 @@ module tb_accelerator_wrapper
     logic [DATA_WIDTH-1:0]      mem_rdata_s;
     logic [DATA_WIDTH-1:0]      mem_wdata_s;
 
-    int data_cnt_s, addr_cnt_s;
+    int data_cnt_s, addr_cnt_s;     // signals
 
     enum {  IDLE,
             WRITE_DATA,
@@ -139,6 +140,7 @@ module tb_accelerator_wrapper
     begin
 
         // Defaults
+        // 3.2.4 low level bus interface??
         mem_req_s   = 1'b0;
         mem_addr_s  = addr_cnt_s;
         mem_we_s    = 1'b0;
@@ -188,6 +190,7 @@ module tb_accelerator_wrapper
     end
 
 
+    // reset
     always_ff @(posedge clk_s, negedge rst_n_s)
     begin
         if (!rst_n_s) begin

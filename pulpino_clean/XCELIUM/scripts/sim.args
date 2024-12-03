@@ -15,8 +15,21 @@
 -INCDIR ${IPS}/apb/apb_event_unit/include
 -INCDIR ${IPS}/apb/apb_i2c
 -INCDIR ${IPS}/adv_dbg_if/rtl
+-INCDIR ${RTL}/template_accelerator
 
 // Source Files
+${RTL}/template_accelerator/cfg_types_pkg.sv
+${RTL}/template_accelerator/accel_wrapper.sv
+${RTL}/template_accelerator/config_reg.sv
+${RTL}/template_accelerator/example_add.sv
+${RTL}/template_accelerator/true_dp_ram.sv
+${RTL}/template_accelerator/accel_top_wrapper.sv
+${RTL}/template_accelerator/tb_config_reg.sv
+${RTL}/template_accelerator/tb_accelerator_template.sv
+
+
+
+
 ${IPS}/riscv/include/apu_core_package.sv
 ${IPS}/riscv/include/riscv_defines.sv
 ${IPS}/riscv/include/riscv_tracer_defines.sv

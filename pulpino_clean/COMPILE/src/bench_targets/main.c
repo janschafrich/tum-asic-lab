@@ -8,11 +8,11 @@
 #include "stackbench.h"
 
 /* Declared globally such that variables are not on stack */
-uint8_t input[16];
-size_t inlen = 16;
+uint8_t input[32];
+size_t inlen = 32;
 
-uint8_t output[32];
-size_t outlen = 32;
+uint8_t output[64];
+size_t outlen = 64;
 
 int t0, t1;
 

@@ -34,7 +34,7 @@ module accel_wrapper
 );
 
 
-    // Accelerator memory connection
+    // Accelerator memory connection - port a
     logic                           accel_mem_en_a;
     logic [MEM_ADDR_WIDTH-1:0]      accel_mem_addr_a;
     logic                           accel_mem_we_a;
@@ -42,7 +42,7 @@ module accel_wrapper
     logic [MEM_DATA_WIDTH-1:0]      accel_mem_wdata_a;
     logic [MEM_DATA_WIDTH/8-1:0]    accel_mem_be_a;
 
-    // Accelerator memory connection
+    // Accelerator memory connection - port b
     logic                           accel_mem_en_b;
     logic [MEM_ADDR_WIDTH-1:0]      accel_mem_addr_b;
     logic                           accel_mem_we_b;
