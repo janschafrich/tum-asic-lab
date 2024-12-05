@@ -7,14 +7,29 @@
 #include "fips202.h"
 #include "stackbench.h"
 
-/* Declared globally such that variables are not on stack */
-uint8_t input[32];
-size_t inlen = 32;
+#define accel_base     (0x20000000u)
+#define control_offset (0x0u        )
+#define status_offest  (0x10u       )
+#define data_offset    (0x80000u    )
 
-uint8_t output[64];
-size_t outlen = 64;
+#define START_REG       ((volatile uint8_t*) (accel_base + control_offset))
+#define N_ELEMENTS_REG  ((volatile uint8_t*) (accel_base + control_offset + 1))
+#define INCR            ((volatile uint8_t*) (accel_base + control_offset + 2))
+#define STATUS_REG      ((volatile uint8_t*) (accel_base + status_offest))
+#define ACCEL_DATA_BASE ((volatile uint8_t*) (accel_base + data_offset))
+
+#define TEST_DATA_ELEMENTS 17
+
+#define ENABLE_DEBUG    0
+
+/* Declared globally such that variables are not on stack */
+uint8_t *accel_data = ACCEL_DATA_BASE;      // a pointer to a 8bit value
 
 int t0, t1;
+int count = 0;
+
+enum acc_state {ST_IDLE, ST_RUNNING};
+enum acc_error {ER_OKAY, ER_INVALID_CFG, ER_OTHERS};
 
 int main(void)
 {
@@ -27,24 +42,52 @@ int main(void)
         set_gpio_pin_direction(i, DIR_OUT);
     }
 
-    /* Initialize input for shake with counter values */
-    for (uint8_t i=0; i<inlen; i++) {
-        input[i] = i;
+    /* Initialize data array with counter values */
+    for (uint8_t i = 0; i < TEST_DATA_ELEMENTS; i++)
+    {
+        accel_data[i] = i;
     }
 
+    // verify successful write
+    for (int i = 0; i < TEST_DATA_ELEMENTS; i++)
+    {
+        printf("0x%x accel_data[%d] = %d \n",&accel_data[i], i, accel_data[i] );
+    }
 
-    /* Measure time, stack and perform shake128 in software */
+    printf("Idle:\n");
+    printf("Accel: Status Address 0x%x=%d \n",  STATUS_REG,  *START_REG & 0x0F);
+    printf("Accel: Error  Address 0x%x=%d \n",   STATUS_REG, (*START_REG & 0xF0) >> 4);
+
     write_stack();
+    
+
+    printf("Before Write 0x%x N_ELEMENTS_REG = %d\n", N_ELEMENTS_REG, *N_ELEMENTS_REG);
+    *N_ELEMENTS_REG =  (uint8_t) TEST_DATA_ELEMENTS;
+    printf("After Write  0x%x N_ELEMENTS_REG = %d\n", N_ELEMENTS_REG, *N_ELEMENTS_REG);
+
+    printf("Before Write 0x%x INCR = %d\n", INCR, *INCR);
+    *INCR =  (uint8_t) 1;
+    printf("After Write  0x%x INCR = %d\n", INCR, *INCR);
+
+    printf("Before Write 0x%x START_REG = %d\n", START_REG, *START_REG);
     t0 = get_time();
-    shake128(output, outlen, input, inlen);
+    *START_REG = (uint8_t) 1;
+    printf("After Write  0x%x START_REG = %d\n", START_REG, *START_REG);
+
+    // busy wait until Accelerator is done and resets the start bit
+    printf("Accel: Addr 0x%x  Status=%d     Error=%d \n",  STATUS_REG,  *STATUS_REG & 0x0F, (*STATUS_REG & 0xF0) >> 4);
+
+    while (*START_REG == 1);
     t1 = get_time();
+    printf("Accel: Addr 0x%x  Status=%d     Error=%d \n",  STATUS_REG,  *STATUS_REG & 0x0F, (*STATUS_REG & 0xF0) >> 4);
+    
+
     uint32_t stack_bytes = check_stack();
 
-    /* Print output for comparison */
-    for (uint8_t i=0; i<outlen; i++) {
-        printf("%02x ", output[i]);
+    for (int i = 0; i < TEST_DATA_ELEMENTS; i++)
+    {
+        printf("test_data[%d] = %d\n", i, accel_data[i]);
     }
-
 
     /* Print elapsed time and stack consumption */
     printf("\nElapsed cycles: %d\n", t1-t0);

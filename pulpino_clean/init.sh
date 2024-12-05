@@ -1,5 +1,6 @@
 #! /usr/bin/bash
 
+# cd /nas/ei/home/go69hil/asic_wise2425_schaefrich/pulpino_clean
 
 . setup_cadence.sh
 

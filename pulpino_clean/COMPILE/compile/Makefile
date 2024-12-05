@@ -78,6 +78,28 @@ keccak_bench_data.bin: keccak_bench.elf
 	$(OBJCOPY) -j .rodata -j .data -j .stack -O binary $^ $@
 
 
+#################################
+######## Adder TARGET ########
+#################################
+# adder: INCDIR += -I$(KECCAKPREFIX) -I${LIBPREFIX}
+# adder: CFLAGS += 
+# adder: adder.elf slm/adder.txt keccak_bench_instr.bin keccak_bench_data.bin
+
+# adder.elf: $(LIBSRCS:.c=.o) $(LIBSRCS_ASM:.S=.o) $(KECCAKSRCS_C:.c=.o) $(KECCAKSRCS_ASM:.S=.o)
+# 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
+# 	$(OBJSIZE) --format=berkeley $@
+
+# slm/adder.txt: adder.srec
+# 	cd slm && $(SRECTOSLM) ../$^
+# 	cp slm/spi_stim.txt ../../XCELIUM
+
+# keccak_bench_instr.bin: adder.elf
+# 	$(OBJCOPY) -j .vectors -j '.text*' -O binary $^ $@
+
+# keccak_bench_data.bin: adder.elf
+# 	$(OBJCOPY) -j .rodata -j .data -j .stack -O binary $^ $@
+
+
 ########################
 ###    Resources     ###
 ########################

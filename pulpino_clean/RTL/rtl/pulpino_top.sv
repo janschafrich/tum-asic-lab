@@ -117,6 +117,9 @@ module pulpino_top
   logic [31:0] [5:0] gpio_padcfg_int;
   logic [31:0] [5:0] pad_cfg_int;
 
+  // accelerator 
+  logic done;
+
   genvar i;
   generate
     for (i=0; i < 32; i++) begin
@@ -132,7 +135,7 @@ module pulpino_top
     .AXI_ID_WIDTH   ( `AXI_ID_SLAVE_WIDTH ),
     .AXI_USER_WIDTH ( `AXI_USER_WIDTH     )
   )
-  slaves[2:0]();
+  slaves[3:0]();
 
   AXI_BUS
   #(
@@ -301,6 +304,26 @@ module pulpino_top
     .boot_addr_o     ( boot_addr_int     )
   );
 
+  accel_top_wrapper
+  #(
+    .AXI_ADDR_WIDTH       ( `AXI_ADDR_WIDTH      ),
+    .AXI_DATA_WIDTH       ( 20      ),
+    .AXI_SLAVE_ID_WIDTH   ( `AXI_ID_SLAVE_WIDTH  ),
+    .AXI_MASTER_ID_WIDTH  ( `AXI_ID_MASTER_WIDTH  ),
+    .AXI_USER_WIDTH       ( `AXI_USER_WIDTH        ),
+    .MEM_DEPTH            (1024                   ),
+    .CTRL_WORDS           (4                      ),
+    .STAT_WORDS           (4                      )
+  )
+  accelerator_i
+  (
+    .clk            ( clk   ),
+    .rst_n          ( rst_n ),
+    .testmode_i     ( testmode_i ),
+    .done           ( done ),
+    .axi_slave      ( slaves[3] )
+  );
+
 
   //----------------------------------------------------------------------------//
   // Axi node
@@ -308,7 +331,7 @@ module pulpino_top
 
   axi_node_intf_wrap
   #(
-    .NB_MASTER      ( 3                    ),
+    .NB_MASTER      ( 4                    ),   // AXI is master with respect to accelerator
     .NB_SLAVE       ( 3                    ),
     .AXI_ADDR_WIDTH ( `AXI_ADDR_WIDTH      ),
     .AXI_DATA_WIDTH ( `AXI_DATA_WIDTH      ),
@@ -324,9 +347,10 @@ module pulpino_top
     .master    ( slaves     ),
     .slave     ( masters    ),
 
-    .start_addr_i ( { 32'h1A10_0000, 32'h0010_0000, 32'h0000_0000 } ),
-    .end_addr_i   ( { 32'h1A11_FFFF, 32'h001F_FFFF, 32'h000F_FFFF } )
+    .start_addr_i ( { 32'h2000_0000, 32'h1A10_0000, 32'h0010_0000, 32'h0000_0000 } ),
+    .end_addr_i   ( { 32'h200F_FFFF, 32'h1A11_FFFF, 32'h001F_FFFF, 32'h000F_FFFF } )
   );
+  //                                                                | accelerator slave 3
 
 endmodule
 
