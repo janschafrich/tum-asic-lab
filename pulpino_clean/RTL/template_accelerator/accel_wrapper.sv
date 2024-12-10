@@ -61,14 +61,14 @@ module accel_wrapper
 
 
     ///////////////////////////////////////////////////////
-    // Accelerator
+    // Accelerator - instantiate FSM (Keccak Accelerator)
     ///////////////////////////////////////////////////////
-    example_add
+    accel_fsm
     #(
         .DATA_WIDTH ( MEM_DATA_WIDTH    ),
         .ADDR_WIDTH ( MEM_ADDR_WIDTH    ) 
     )
-    example_add_inst
+    accel_fsm_inst
     (
         .clk            ( clk               ),
         .rst_n          ( rst_n             ),
