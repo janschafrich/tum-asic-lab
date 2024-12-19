@@ -26,8 +26,8 @@ entity keccak_buffer is
     din_buffer_in_valid: in std_logic;
     last_block: in std_logic;
     din_buffer_full : out std_logic;
-    din_buffer_out    : out std_logic_vector(1023 downto 0);
-    dout_buffer_in : in std_logic_vector(255 downto 0);		-- squeeze
+    din_buffer_out    : out std_logic_vector(1344 downto 0);
+    dout_buffer_in : in std_logic_vector(511 downto 0);		-- squeeze
     dout_buffer_out: out std_logic_vector(63 downto 0);
     dout_buffer_out_valid: out std_logic;
     ready: in std_logic);
@@ -48,7 +48,7 @@ signal mode, buffer_full: std_logic; --mode=0 input mode/ mode=1 output mode
 signal count_in_words : unsigned(4 downto 0);
 
 
-signal buffer_data: std_logic_vector(1023 downto 0);
+signal buffer_data: std_logic_vector(1344 downto 0)  -- SHAKE128 demands r = 1344, adapt the rest of the code!
  
   
 begin  -- Rtl
@@ -86,14 +86,14 @@ begin  -- Rtl
 		else
 			
 			if (din_buffer_in_valid='1' and buffer_full='0') then
-							--shift bits 1023:64 down to 959:0
-					for i in 0 to 14 loop
+							--shift bits 1023:64 down to 959:0 -> shift 1344:64 -> 1280:0
+					for i in 0 to 19 loop
 						buffer_data( 63+(i*64) downto 0+(i*64) )<=buffer_data( 127+(i*64) downto 64+(i*64) );			
 					end loop;
 					
 					--insert new input
-					buffer_data(1023 downto 960) <= din_buffer_in;  -- 64 bit
-					if (count_in_words=15) then
+					buffer_data(1343 downto 1280) <= din_buffer_in;  -- 64 bit
+					if (count_in_words=20) then
 						-- buffer full ready for being absorbed by the permutation
 						buffer_full <= '1';
 						count_in_words<= (others=>'0');
@@ -112,7 +112,7 @@ begin  -- Rtl
 		--output mode (mode='1'?)
 		dout_buffer_out_valid<='1';
 		if(count_out_words=0) then
-			buffer_data(255 downto 0) <= dout_buffer_in;
+			buffer_data(511 downto 0) <= dout_buffer_in;
 			count_out_words:=count_out_words+1;
 			dout_buffer_out_valid<='1';
 		

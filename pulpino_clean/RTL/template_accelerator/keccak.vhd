@@ -1,5 +1,5 @@
 -- The Keccak sponge function, designed by Guido Bertoni, Joan Daemen,
--- Michaël Peeters and Gilles Van Assche. For more information, feedback or
+-- Michaï¿½l Peeters and Gilles Van Assche. For more information, feedback or
 -- questions, please refer to our website: http://keccak.noekeon.org/
 
 -- Implementation by the designers,
@@ -23,14 +23,14 @@ entity keccak is
   port (
     clk     : in  std_logic;
     rst_n   : in  std_logic;
-    start : in std_logic;
+    start : in std_logic;		    -- start computing the hash
     din     : in  std_logic_vector(63 downto 0);
-    din_valid: in std_logic;
+    din_valid: in std_logic;		-- data in ready to be consumed
     buffer_full: out std_logic;
-    last_block: in std_logic;    
-    ready : out std_logic;
+    last_block: in std_logic;    -- there is only one block - output mode, blocksize = r
+    ready : out std_logic;		 -- permutation completed
     dout    : out std_logic_vector(63 downto 0);
-    dout_valid : out std_logic);
+    dout_valid : out std_logic);	-- hash ready to be read
 
 end keccak;
 
@@ -63,8 +63,8 @@ component keccak_buffer
     din_buffer_in_valid: in std_logic;
     last_block: in std_logic;
     din_buffer_full : out std_logic;
-    din_buffer_out    : out std_logic_vector(1023 downto 0);
-    dout_buffer_in : in std_logic_vector(255 downto 0);
+    din_buffer_out    : out std_logic_vector(1344 downto 0);
+    dout_buffer_in : in std_logic_vector(511 downto 0);
     dout_buffer_out: out std_logic_vector(63 downto 0);
     dout_buffer_out_valid: out std_logic;
     ready: in std_logic);
@@ -78,13 +78,13 @@ component keccak_buffer
  
   signal reg_data,round_in,round_out: k_state;
   --signal zero_state : k_state;
-  signal reg_data_vector: std_logic_vector (255 downto 0);
+  signal reg_data_vector: std_logic_vector (511 downto 0);
   signal counter_nr_rounds : unsigned(4 downto 0);
   --signal zero_lane: k_lane;
   signal din_buffer_full:std_logic;
   --signal zero_plane: k_plane;
   signal round_constant_signal: std_logic_vector(63 downto 0);
-  signal din_buffer_out: std_logic_vector(1023 downto 0);
+  signal din_buffer_out: std_logic_vector(1344 downto 0);
   signal permutation_computed : std_logic;
  
   
@@ -174,25 +174,25 @@ end generate;
 --input mapping
 
 
---capacity part
+--capacity part  4 * 64 + 5 *64
 
 	i01: for col in 1 to 4 generate
 		i02: for i in 0 to 63 generate
-			round_in(3)(col)(i)<= reg_data(3)(col)(i);
-
-		
-		end generate;	
-	end generate;
-
-	i03: for col in 0 to 4 generate
-		i04: for i in 0 to 63 generate
 			round_in(4)(col)(i)<= reg_data(4)(col)(i);
 
 		
 		end generate;	
 	end generate;
---rate part
-i10: for row in 0 to 2 generate
+
+	-- i03: for col in 0 to 1 generate
+	-- 	i04: for i in 0 to 63 generate
+	-- 		round_in(4)(col)(i)<= reg_data(4)(col)(i);
+
+		
+	-- 	end generate;	
+	-- end generate;
+--rate part		4 * 5 * 64 + 64  = 1344   () first rate, than capacity
+i10: for row in 0 to 3 generate
 	i11: for col in 0 to 4 generate
 		i12: for i in 0 to 63 generate
 			round_in(row)(col)(i)<= reg_data(row)(col)(i) xor (din_buffer_out((row*64*5)+(col*64)+i) and (din_buffer_full and permutation_computed));
@@ -201,7 +201,7 @@ i10: for row in 0 to 2 generate
 end generate;
 
 i13: for i in 0 to 63 generate
-			round_in(3)(0)(i)<= reg_data(3)(0)(i) xor (din_buffer_out((3*64*5)+(0*64)+i) and (din_buffer_full and permutation_computed));
+			round_in(4)(0)(i)<= reg_data(4)(0)(i) xor (din_buffer_out((4*64*5)+(0*64)+i) and (din_buffer_full and permutation_computed));
 end generate;	
 
 	

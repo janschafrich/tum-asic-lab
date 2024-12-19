@@ -65,7 +65,7 @@ i0000: for y in 0 to 4 generate
 		end generate;	
 	end generate;
 end generate;
-
+	-- total 320
 	i0011: for y in 0 to 4 generate
 		i0021: for i in 0 to 63 generate
 			chi_out(y)(3)(i)<=chi_in(y)(3)(i) xor  ( not(chi_in (y)(4)(i))and chi_in (y)(0)(i));
