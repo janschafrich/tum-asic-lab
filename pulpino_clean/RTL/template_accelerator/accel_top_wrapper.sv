@@ -100,8 +100,9 @@ module accel_top_wrapper
 
     // Accelerator configuration
     logic       start_int;
-    logic [7:0] max_cnt_int;
-    logic [7:0] incr;
+    logic [5:0] output_length_d_byte;
+    // logic [7:0] max_cnt_int;
+    // logic [7:0] incr;
 
 
     //////////////////////////////////////////////////////////////////////////////////////
@@ -163,8 +164,7 @@ module accel_top_wrapper
     //////////////////////////////////////////////////////////////////////////////////////
     assign status_vec[0][7:0]   = {accel_err, accel_state};
     assign start_int            = control_vec[0][0];            // bit 0 of word 0 is the start signal of type integer
-    assign max_cnt_int          = control_vec[0][15:8];         // byte 1 of word 0 is max_cnt
-    assign incr                 = control_vec[0][23:16];
+    assign output_length_d_byte = control_vec[0][13:8];         // 6 bit, max 512 bit / 64 Byte hash length. 
 
     genvar i,j;
     generate
@@ -222,8 +222,9 @@ module accel_top_wrapper
         
         .start          ( start_int         ),
         .done           ( done_int          ),
-        .max_cnt        ( max_cnt_int       ),
-        .incr           ( incr              ),
+        .output_length_byte (output_length_d_byte),
+        // .max_cnt        ( max_cnt_int       ),
+        // .incr           ( incr              ),
 
         .mem_en         ( axi_mem_en        ),
         .mem_addr       ( acc_addr          ),

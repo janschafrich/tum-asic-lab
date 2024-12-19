@@ -22,8 +22,9 @@ module accel_wrapper
 
     input   logic                           start,
     output  logic                           done,
-    input   logic [7:0]                     max_cnt,
-    input   logic [7:0]                     incr,
+    input   logic                           output_length_byte,
+    // input   logic [7:0]                     max_cnt,
+    // input   logic [7:0]                     incr,
 
     input   logic                           mem_en,
     input   logic [MEM_ADDR_WIDTH-1:0]      mem_addr,
@@ -78,8 +79,9 @@ module accel_wrapper
 
         .start          ( start             ),
         .done           ( done              ),
-        .max_cnt        ( max_cnt           ),
-        .incr           ( incr              ),
+        // .max_cnt        ( max_cnt           ),
+        // .incr           ( incr              ),
+        .output_length_byte ( output_length_byte),
 
         .mem_en_a       ( accel_mem_en_a    ),
         .mem_addr_a     ( accel_mem_addr_a  ),
