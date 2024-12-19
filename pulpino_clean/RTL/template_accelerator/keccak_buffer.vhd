@@ -48,7 +48,7 @@ signal mode, buffer_full: std_logic; --mode=0 input mode/ mode=1 output mode
 signal count_in_words : unsigned(4 downto 0);
 
 
-signal buffer_data: std_logic_vector(1344 downto 0)  -- SHAKE128 demands r = 1344, adapt the rest of the code!
+signal buffer_data: std_logic_vector(1344 downto 0);  -- SHAKE128 demands r = 1344, adapt the rest of the code!
  
   
 begin  -- Rtl

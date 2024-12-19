@@ -10,11 +10,12 @@
 
 package cfg_types_pkg;
     // Status encoding
-    typedef enum logic [3:0] {  ST_IDLE     = 4'h0,
-                                ST_WRITE    = 4'h1,
-                                ST_WAIT     = 4'h2,
-                                ST_READ     = 4'h3,
-                                ST_DONE     = 4'h4   } acc_state_t;
+    typedef enum logic [3:0] {  ST_IDLE         = 4'h0,
+                                ST_WRITE        = 4'h1,
+                                ST_START_ACCEL  = 4'h2,
+                                ST_WAIT         = 4'h3,
+                                ST_READ         = 4'h4,
+                                ST_DONE         = 4'h5   } acc_state_t;
 
     // Error encoding
     typedef enum logic [3:0] {  ER_OKAY         = 4'h0,

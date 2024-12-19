@@ -200,7 +200,7 @@ module accel_top_wrapper
 
         .slave       ( axi_slave        )
     );
-    assign axi_mem_addr = {axi_mem_addr_tmp[INT_ADDR_WIDTH-ALIGN_BITS-1:0], {ALIGN_BITS{1'b0}}};;
+    assign axi_mem_addr = {axi_mem_addr_tmp[INT_ADDR_WIDTH-ALIGN_BITS-1:0], {ALIGN_BITS{1'b0}}};
 
 
     //////////////////////////////////////////////////////////////////////////////////////

@@ -21,7 +21,7 @@ module accel_fsm
 
     input   logic                       start,     
     output  logic                       done,  
-    input   logic                       output_length_byte,    
+    input   logic [5:0]                       output_length_byte,    
 
     output  logic                       mem_en_a,           // port enable
     output  logic [ADDR_WIDTH-1:0]      mem_addr_a,         // address for port a
@@ -42,7 +42,7 @@ module accel_fsm
     // Signals to connect ports
     //////////////////////////////////////////////////////////////////
     
-    enum {IDLE, WRITE, START_COMPUTING, WAIT, READ, DONE}  state, n_state;
+    enum {IDLE, WRITE, START_ACCEL_ST, WAIT, READ, DONE}  state, n_state;
 
     logic   [7:0]   addr_cntr_s;
     logic   [7:0]   addr_s;
@@ -51,7 +51,8 @@ module accel_fsm
     logic           clk_s;
     logic           rst_n_s;
     logic           start_s;
-    reg [63:0]      din_s;
+    logic           start_accel;
+    logic [63:0]    din_s;
     logic           din_valid_s;
     logic           buffer_full_s;
     logic           last_block_s;
@@ -63,11 +64,11 @@ module accel_fsm
     // Keccak Copro
     //////////////////////////////////////////////////////////////////
 
-    keccak #() keccap_inst 
+    keccak #() keccak_inst 
     (
         .clk            (clk_s),
         .rst_n          (rst_n_s),
-        .start          (start_s),
+        .start          (start_accel),
         .din            (din_s),
         .din_valid      (din_valid_s),
         .buffer_full    (buffer_full_s),
@@ -93,15 +94,14 @@ module accel_fsm
         unique case (state)
             IDLE: 
                 if (start)      n_state = WRITE;
-
             WRITE:  // write input from local RAM into accel buffer
-                if (output_length_byte < addr_cntr_s) n_state = START_COMPUTING;
-            START_COMPUTING:
-                if (start_s)    n_state = WAIT;
+                if ((output_length_byte < addr_cntr_s) && (dout_valid_s == 1'b0)) n_state = START_ACCEL_ST;
+            START_ACCEL_ST:
+                if (start_accel)    n_state = WAIT;
             WAIT:   // wait for the accel to compute the hash
-                if (ready_s)    n_state = READ;
+                if (dout_valid_s)    n_state = READ;
             READ:   // read hash from accel buffer into local RAM
-                                n_state = DONE;
+                if ((output_length_byte < addr_cntr_s) && (dout_valid_s == 1'b1)) n_state = DONE;
             DONE: begin
                 // transition to idle with reset
             end
@@ -110,10 +110,7 @@ module accel_fsm
 
     // Memory control
     always_comb
-    begin
-        // Defaults
-        // accel_state = ST_IDLE;
-        // accel_error = ER_OKAY;       
+    begin    
         unique case (state)
             IDLE : begin
                 // NULL
@@ -126,20 +123,16 @@ module accel_fsm
                 mem_en_b                = 1'b1;
                 mem_we_b                = 1'b0; // read
                 mem_be_b                = 1'b1; // enable burst
-                mem_addr_a              = addr_s;
-                mem_addr_b              = addr_s + 1;                
-                din_s[31:0]             = mem_rdata_a;
-                din_s[63:32]            = mem_rdata_b;
             end
 
-            START_COMPUTING: begin
-                addr_s                  = 0;
+            START_ACCEL_ST: begin
                 mem_en_a                = 1'b0;
                 mem_en_b                = 1'b0;      
             end
 
             WAIT: begin
-               // do nothing
+                mem_en_a                = 1'b0;
+                mem_en_b                = 1'b0; 
             end
 
             READ: begin  // read hash from accel buffer into local RAM
@@ -149,16 +142,10 @@ module accel_fsm
                 mem_en_b                = 1'b1;
                 mem_we_b                = 1'b1; // write
                 mem_be_b                = 1'b1; // enable burst
-                mem_addr_a              = addr_s;
-                mem_addr_b              = addr_s + 1; 
-                mem_wdata_a             = dout_s[31:0];
-                mem_wdata_b             = dout_s[63:32];
             end
 
             DONE : begin
-                accel_state     = ST_DONE;
             end
-
         endcase
     end
 
@@ -167,43 +154,45 @@ module accel_fsm
     always_ff @(posedge clk, negedge rst_n)
     begin
         if (!rst_n) begin
-            start_s          = 1'b0;
+            start_s       = 1'b0;
+            din_valid_s   = 1'b0;
+            last_block_s  = 1'b0;
         end
         else begin
             unique case (state)
                 IDLE : begin
-                    din_valid_s   = 1'b0;
                     start_s       = 1'b0;
-
+                    din_valid_s   = 1'b0;
+                    last_block_s  = 1'b0;
                 end
 
                 WRITE : begin
-
+                    start_s       = 1'b0;
+                    din_valid_s   = 1'b0;
+                    last_block_s  = 1'b0;
                 end
 
-                START_COMPUTING: begin
+                START_ACCEL_ST: begin
                     din_valid_s = 1'b1;
                     start_s     = 1'b1;
                     last_block_s = 1'b1;
                     // ready_s     = 1'b1;     //
                 end
 
-
                 WAIT: begin
                    //extract directly after first permutation 
+                    start_s     = 1'b0;
+                    din_valid_s = 1'b0;
+                    last_block_s = 1'b0;
                 end
 
                 READ: begin
                     start_s     = 1'b0;
+                    din_valid_s = 1'b0;
+                    last_block_s = 1'b0;
                 end
-
 
                 DONE : begin
-                    done = 1'b1;        // feedback for CPU - where to put??
-                end
-
-                default : begin
-                    // NULL
                 end
             endcase
         end
@@ -213,7 +202,7 @@ module accel_fsm
     always_ff @(posedge clk, negedge rst_n)
     begin
         if (!rst_n) begin
-            addr_s          = 0;    
+            addr_s          = 0;
             addr_cntr_s     = 0;
         end
         else begin
@@ -239,19 +228,57 @@ module accel_fsm
 
             endcase
         end
+    end
 
+    // output control
+    always_ff @(posedge clk, negedge rst_n) begin
+        if (!rst_n) begin
+
+        end else begin
+            case (state)
+                IDLE: begin
+                    done    = 1'b0;
+                    accel_state = ST_IDLE;
+                end
+                WRITE: begin
+                    done        = 1'b0;
+                    accel_state = ST_WRITE;
+                end
+
+                START_ACCEL_ST: begin
+                    done        = 1'b0;
+                    accel_state = ST_START_ACCEL;
+                end
+                WAIT: begin
+                    done        = 1'b0;
+                    accel_state = ST_WAIT;
+                end
+
+                READ: begin
+                    done        = 1'b0;
+                    accel_state = ST_READ;
+                end
+                DONE: begin
+                    done        = 1'b1;
+                    accel_state = ST_DONE;
+                end
+            endcase
+        end
     end
 
     //////////////////////////////////////////////////////////////////
     // Assignments
-    //////////////////////////////////////////////////////////////////
-    // assign mem_we_a    = 1'b0;        // use a only for reading
-    // assign mem_we_b    = 1'b1;        // use b only for writing
-    
+    //////////////////////////////////////////////////////////////////    
     assign clk_s        = clk;
     assign rst_n_s      = rst_n;
 
-    assign start_s      = start;     // input   
-    // assign done         = done_s;    // output
+    assign start_accel     = start_s;        
+
+    assign mem_addr_a       = addr_s;
+    assign mem_addr_b       = addr_s + 1; 
+    assign mem_wdata_a      = dout_s[31:0];
+    assign mem_wdata_b      = dout_s[63:32];
+    assign din_s[31:0]      = mem_rdata_a;
+    assign din_s[63:32]     = mem_rdata_b;
 
 endmodule

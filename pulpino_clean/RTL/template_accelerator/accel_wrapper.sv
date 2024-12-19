@@ -22,7 +22,7 @@ module accel_wrapper
 
     input   logic                           start,
     output  logic                           done,
-    input   logic                           output_length_byte,
+    input   logic [5:0]                     output_length_byte,
     // input   logic [7:0]                     max_cnt,
     // input   logic [7:0]                     incr,
 
