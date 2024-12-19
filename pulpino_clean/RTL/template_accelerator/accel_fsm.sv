@@ -42,7 +42,7 @@ module accel_fsm
     // Signals to connect ports
     //////////////////////////////////////////////////////////////////
     
-    enum {IDLE, WRITE, WAIT, READ, DONE}  state, n_state;
+    enum {IDLE, WRITE, START_COMPUTING, WAIT, READ, DONE}  state, n_state;
 
     logic   [7:0]   addr_cntr_s;
     logic   [7:0]   addr_s;
@@ -63,7 +63,7 @@ module accel_fsm
     // Keccak Copro
     //////////////////////////////////////////////////////////////////
 
-    keccap #() keccap_inst 
+    keccak #() keccap_inst 
     (
         .clk            (clk_s),
         .rst_n          (rst_n_s),
@@ -93,7 +93,10 @@ module accel_fsm
         unique case (state)
             IDLE: 
                 if (start)      n_state = WRITE;
+
             WRITE:  // write input from local RAM into accel buffer
+                if (output_length_byte < addr_cntr_s) n_state = START_COMPUTING;
+            START_COMPUTING:
                 if (start_s)    n_state = WAIT;
             WAIT:   // wait for the accel to compute the hash
                 if (ready_s)    n_state = READ;
@@ -109,8 +112,8 @@ module accel_fsm
     always_comb
     begin
         // Defaults
-        accel_state = ST_IDLE;
-        accel_error = ER_OKAY;       
+        // accel_state = ST_IDLE;
+        // accel_error = ER_OKAY;       
         unique case (state)
             IDLE : begin
                 // NULL
@@ -129,11 +132,14 @@ module accel_fsm
                 din_s[63:32]            = mem_rdata_b;
             end
 
-            WAIT: begin
+            START_COMPUTING: begin
                 addr_s                  = 0;
                 mem_en_a                = 1'b0;
                 mem_en_b                = 1'b0;      
+            end
 
+            WAIT: begin
+               // do nothing
             end
 
             READ: begin  // read hash from accel buffer into local RAM
@@ -167,15 +173,24 @@ module accel_fsm
             unique case (state)
                 IDLE : begin
                     din_valid_s   = 1'b0;
+                    start_s       = 1'b0;
 
                 end
 
-                WRITE :
-                    if (addr_cntr_s > output_length_byte) din_valid_s = 1'b1;
+                WRITE : begin
+
+                end
+
+                START_COMPUTING: begin
+                    din_valid_s = 1'b1;
+                    start_s     = 1'b1;
+                    last_block_s = 1'b1;
+                    // ready_s     = 1'b1;     //
+                end
+
 
                 WAIT: begin
-                    start_s     = 1'b1;
-                    ready_s     = 1'b1;     // extract directly after first permutation 
+                   //extract directly after first permutation 
                 end
 
                 READ: begin
