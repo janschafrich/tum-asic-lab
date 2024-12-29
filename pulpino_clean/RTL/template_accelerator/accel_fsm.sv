@@ -21,7 +21,7 @@ module accel_fsm
 
     input   logic                       start,     
     output  logic                       done,  
-    input   logic [5:0]                       output_length_byte,    
+    input   logic [5:0]                 output_length_byte,    
 
     output  logic                       mem_en_a,           // port enable
     output  logic [ADDR_WIDTH-1:0]      mem_addr_a,         // address for port a
@@ -42,7 +42,7 @@ module accel_fsm
     // Signals to connect ports
     //////////////////////////////////////////////////////////////////
     
-    enum {IDLE, WRITE, START_ACCEL_ST, WAIT, READ, DONE}  state, n_state;
+    enum {IDLE, WRITE, START_ACCEL_ST, WAIT_HASH, READ, DONE}  state, n_state;
 
     logic   [7:0]   addr_cntr_s;
     logic   [7:0]   addr_s;
@@ -97,8 +97,8 @@ module accel_fsm
             WRITE:  // write input from local RAM into accel buffer
                 if ((output_length_byte < addr_cntr_s) && (dout_valid_s == 1'b0)) n_state = START_ACCEL_ST;
             START_ACCEL_ST:
-                if (start_accel)    n_state = WAIT;
-            WAIT:   // wait for the accel to compute the hash
+                if (start_accel)    n_state = WAIT_HASH;
+            WAIT_HASH:   // wait for the accel to compute the hash
                 if (dout_valid_s)    n_state = READ;
             READ:   // read hash from accel buffer into local RAM
                 if ((output_length_byte < addr_cntr_s) && (dout_valid_s == 1'b1)) n_state = DONE;
@@ -130,7 +130,7 @@ module accel_fsm
                 mem_en_b                = 1'b0;      
             end
 
-            WAIT: begin
+            WAIT_HASH: begin
                 mem_en_a                = 1'b0;
                 mem_en_b                = 1'b0; 
             end
@@ -179,7 +179,7 @@ module accel_fsm
                     // ready_s     = 1'b1;     //
                 end
 
-                WAIT: begin
+                WAIT_HASH: begin
                    //extract directly after first permutation 
                     start_s     = 1'b0;
                     din_valid_s = 1'b0;
@@ -215,7 +215,7 @@ module accel_fsm
                     end
                 end
 
-                WAIT: addr_cntr_s = 0;
+                WAIT_HASH: addr_cntr_s = 0;
 
                 READ: begin
                     if (output_length_byte > addr_cntr_s) begin       
@@ -249,7 +249,7 @@ module accel_fsm
                     done        = 1'b0;
                     accel_state = ST_START_ACCEL;
                 end
-                WAIT: begin
+                WAIT_HASH: begin
                     done        = 1'b0;
                     accel_state = ST_WAIT;
                 end

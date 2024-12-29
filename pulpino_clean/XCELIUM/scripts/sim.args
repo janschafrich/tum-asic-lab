@@ -32,6 +32,8 @@ ${RTL}/template_accelerator/keccak_round.vhd
 ${RTL}/template_accelerator/keccak.vhd
 ${RTL}/template_accelerator/tb_config_reg.sv
 ${RTL}/template_accelerator/tb_accelerator_template.sv
+${RTL}/template_accelerator/tb_accel_wrapper.sv
+
 
 
 
