@@ -95,12 +95,12 @@ module accel_top_wrapper
     // Accelerator state and error
     acc_state_t accel_state;
     acc_error_t accel_err;
-    logic done_int;
+    logic       done_int;
 
 
     // Accelerator configuration
     logic       start_int;
-    logic [5:0] output_length_d_byte;
+    logic [5:0] output_length_byte;
     // logic [7:0] max_cnt_int;
     // logic [7:0] incr;
 
@@ -162,9 +162,10 @@ module accel_top_wrapper
     //////////////////////////////////////////////////////////////////////////////////////
     // Config reg connections -  connect register to memory file
     //////////////////////////////////////////////////////////////////////////////////////
-    assign status_vec[0][7:0]   = {accel_err, accel_state};
+    assign status_vec[0][7:0]   = {accel_err, accel_state};     // 7:4 = error, 3:0 = state
     assign start_int            = control_vec[0][0];            // bit 0 of word 0 is the start signal of type integer
-    assign output_length_d_byte = control_vec[0][13:8];         // 6 bit, max 512 bit / 64 Byte hash length. 
+    assign output_length_byte   = control_vec[0][13:8];         // byte 1 of word 0 is max_cnt
+    // assign incr                 = control_vec[0][23:16];
 
     genvar i,j;
     generate
@@ -175,7 +176,7 @@ module accel_top_wrapper
 
 
     //////////////////////////////////////////////////////////////////////////////////////
-    // AXI to memory bus conversion
+    // AXI to memory bus conversion 
     //////////////////////////////////////////////////////////////////////////////////////
     axi_mem_if_SP_wrap
     #(
@@ -200,7 +201,7 @@ module accel_top_wrapper
 
         .slave       ( axi_slave        )
     );
-    assign axi_mem_addr = {axi_mem_addr_tmp[INT_ADDR_WIDTH-ALIGN_BITS-1:0], {ALIGN_BITS{1'b0}}};
+    assign axi_mem_addr = {axi_mem_addr_tmp[INT_ADDR_WIDTH-ALIGN_BITS-1:0], {ALIGN_BITS{1'b0}}};;
 
 
     //////////////////////////////////////////////////////////////////////////////////////
@@ -222,9 +223,7 @@ module accel_top_wrapper
         
         .start          ( start_int         ),
         .done           ( done_int          ),
-        .output_length_byte (output_length_d_byte),
-        // .max_cnt        ( max_cnt_int       ),
-        // .incr           ( incr              ),
+        .output_length_byte ( output_length_byte),
 
         .mem_en         ( axi_mem_en        ),
         .mem_addr       ( acc_addr          ),

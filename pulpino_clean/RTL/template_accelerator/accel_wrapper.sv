@@ -23,8 +23,6 @@ module accel_wrapper
     input   logic                           start,
     output  logic                           done,
     input   logic [5:0]                     output_length_byte,
-    // input   logic [7:0]                     max_cnt,
-    // input   logic [7:0]                     incr,
 
     input   logic                           mem_en,
     input   logic [MEM_ADDR_WIDTH-1:0]      mem_addr,
@@ -79,9 +77,7 @@ module accel_wrapper
 
         .start          ( start             ),
         .done           ( done              ),
-        // .max_cnt        ( max_cnt           ),
-        // .incr           ( incr              ),
-        .output_length_byte ( output_length_byte),
+        .output_length_byte ( output_length_byte ),
 
         .mem_en_a       ( accel_mem_en_a    ),
         .mem_addr_a     ( accel_mem_addr_a  ),
@@ -106,7 +102,7 @@ module accel_wrapper
     #(
       .ADDR_WIDTH ( MEM_ADDR_WIDTH      ),
       .DATA_WIDTH ( MEM_DATA_WIDTH      ),
-      .DEPTH      ( MEM_DEPTH           )
+      .DEPTH      ( 42           )
     )
     ram_inst
     (
@@ -129,7 +125,7 @@ module accel_wrapper
 
 
     ///////////////////////////////////////////////////////
-    // Multiplex memory port a
+    // Multiplex memory port a           accel       : CPU
     ///////////////////////////////////////////////////////
     assign mem_en_a_int         = start ? accel_mem_en_b    : mem_en;
     assign mem_addr_a_int       = start ? accel_mem_addr_b  : mem_addr;

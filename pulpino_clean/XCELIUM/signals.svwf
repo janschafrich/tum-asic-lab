@@ -9,34 +9,27 @@ mmap new  -reuse -name {Example Map} -radix %x -contents {{%b=11???? -bgcolor or
 {%x=2C -bgcolor red -label ERROR -linecolor white -shape EVENT}
 {%x=* -label %x -linecolor gray -shape bus}}
 
+#
+# Conditions
+#
+set expression tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:buffer_in:din_buffer_in
+if {[catch {condition new -name  condition -expr $expression}] != ""} {
+    condition set -using condition -expr $expression
+}
+
 array unset createdGroup
 array set createdGroup {}
 set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.clk_s}]}
+	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.rst_n}]}
 	} ]]
 set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.rst_n_s}]}
+	{[format {tb_accel_wrapper.accel_wrapper_inst.clk}]}
 	} ]]
 set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.start_s}]}
+	{[format {tb_accel_wrapper.accel_wrapper_inst.done}]}
 	} ]]
 set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.done}]}
-	} ]]
-set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.accel_wrapper_inst.ram_inst.en_a_i}]}
-	} ]]
-set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.accel_wrapper_inst.ram_inst.en_b_i}]}
-	} ]]
-set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.accel_wrapper_inst.ram_inst.we_a_i}]}
-	} ]]
-set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.accel_wrapper_inst.ram_inst.we_b_i}]}
-	} ]]
-set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.accel_wrapper_inst.ram_inst.mem[0:15]}]}
+	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.start}]}
 	} ]]
 set id [waveform add -signals [subst  {
 	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.state}]}
@@ -45,31 +38,20 @@ set id [waveform add -signals [subst  {
 	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.start_hash}]}
 	} ]]
 set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:buffer_in:buffer_data}]}
-	} ]]
-set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:buffer_in:mode}]}
-	} ]]
-set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:buffer_in:last_block}]}
-	} ]]
-set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:buffer_in:din_buffer_in}]}
-	} ]]
-set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:buffer_in:din_buffer_in_valid}]}
-	} ]]
-set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:buffer_in:dout_buffer_out}]}
-	} ]]
-set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:buffer_in:dout_buffer_out_valid}]}
+	{[format {tb_accel_wrapper.accel_wrapper_inst.ram_inst.mem[0:41]}]}
 	} ]]
 set id [waveform add -signals [subst  {
 	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:din}]}
 	} ]]
+waveform hierarchy collapse $id
 set id [waveform add -signals [subst  {
 	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:din_valid}]}
+	} ]]
+set id [waveform add -signals [subst  {
+	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:dout}]}
+	} ]]
+set id [waveform add -signals [subst  {
+	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:dout_valid}]}
 	} ]]
 set id [waveform add -signals [subst  {
 	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:last_block}]}
@@ -81,10 +63,25 @@ set id [waveform add -signals [subst  {
 	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:ready}]}
 	} ]]
 set id [waveform add -signals [subst  {
+	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:reg_data}]}
+	} ]]
+set id [waveform add -signals [subst  {
+	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:round_in}]}
+	} ]]
+set id [waveform add -signals [subst  {
+	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:round_out}]}
+	} ]]
+set id [waveform add -signals [subst  {
+	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:start}]}
+	} ]]
+set id [waveform add -signals [subst  {
 	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:buffer_full}]}
 	} ]]
 set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:rst_n}]}
+	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:buffer_in:buffer_data}]}
+	} ]]
+set id [waveform add -signals [subst  {
+	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:buffer_in:mode}]}
 	} ]]
 
-waveform xview limits 0 262.144ns
+waveform xview limits 208739781fs 1550917061fs

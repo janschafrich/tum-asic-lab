@@ -30,6 +30,7 @@ logic [MEM_DATA_WIDTH/8-1:0]    mem_be_s;
 logic [MEM_DATA_WIDTH-1:0]      mem_wdata_s;
 logic [MEM_DATA_WIDTH-1:0]      mem_rdata_s;
 
+integer                         i = 0;
 
 
 
@@ -70,45 +71,41 @@ accel_wrapper_inst
 
 assign mem_be_s     = 4'hf;
 
+
 // stimuli  
 // write
-initial begin
-    #20;
+initial begin 
     start_s         = 1'b0;
     mem_en_s        = 1'b1;
-    mem_addr_s      = 0;
     mem_we_s        = 1'b1;
-    mem_wdata_s     = 32'h5555_5555;
 
-    #20;
+    for (i = 0; i <= 168; i = i + 4) begin
+        @ (posedge clk_s)
+        mem_addr_s = i / 4;
+        if (i == 0)         mem_wdata_s = 32'h5555_5555;
+        else if (i == 4)    mem_wdata_s = 32'h8000_0000;   
+        else if (i == 164)  mem_wdata_s = 32'h0000_0001;
+        else                mem_wdata_s = 32'h0000_0000;
+    end
+    if (i > 168)           start_s = 1'b1;
 
-    mem_addr_s      = 1;
-    mem_we_s        = 1'b1;
-    mem_wdata_s     = 32'h8888_8888;
-
-
-    output_length_byte_s = 6'h8;
-
-    #40
-
-    start_s         = 1'b1;
 end
 
 
 // read
-always @ (posedge done_s)
-begin
-    if (done_s)
-    begin
-        start_s         = 1'b0;
+// always @ (posedge done_s)
+// begin
+//     if (done_s)
+//     begin
 
-        mem_en_s        = 1'b1;
-        mem_addr_s      = 0;
-        mem_we_s        = 1'b0;
-    // mem_rdata
-    end
 
-end
+//         mem_en_s        = 1'b1;
+//         mem_addr_s      = 0;
+//         mem_we_s        = 1'b0;
+//     // mem_rdata
+//     end
+
+// end
 
 
 endmodule

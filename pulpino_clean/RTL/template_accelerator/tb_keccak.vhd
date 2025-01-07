@@ -22,10 +22,10 @@ library ieee;
 	use ieee.std_logic_unsigned."+"; 
 
 
-entity tb_keccak is
-end tb_keccak;
+entity keccak_tb is
+end keccak_tb;
 	
-architecture tb of tb_keccak is
+architecture tb of keccak_tb is
 
 
 -- components
@@ -115,11 +115,11 @@ begin
 					assert false report "Simulation completed" severity failure;
 					st <= STOP;
 				else
-					if(line_in(1)='-') then						
-						st<= END_HASH1;
+					if(line_in(1)='-') then	-- "-" symbolizes end of first hash					
+						st<= END_HASH1;		-- stop reading
 						
 					else
-						din_val<='1';
+						din_val<='1';		-- continue reading
 						hread(line_in,temp);
 						din<=temp;	
 						
