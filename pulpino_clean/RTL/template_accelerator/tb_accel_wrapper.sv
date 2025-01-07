@@ -32,9 +32,13 @@ logic [MEM_DATA_WIDTH-1:0]      mem_rdata_s;
 
 
 
+
 /// reset & clock
 initial begin 
+    rst_n_s = 1'b0;
+    #5
     rst_n_s = 1'b1;
+    clk_s   = 1'b1;
 end
 
 always #5 clk_s = ~clk_s;
@@ -58,26 +62,36 @@ accel_wrapper_inst
     .output_length_byte (output_length_byte_s),
     .mem_en             (mem_en_s),
     .mem_addr           (mem_addr_s),
-    .mem_we           (mem_we_s),
+    .mem_we             (mem_we_s),
     .mem_wdata          (mem_wdata_s),
     .mem_be             (mem_be_s),
     .mem_rdata          (mem_rdata_s)
 );
 
+assign mem_be_s     = 4'hf;
+
 // stimuli  
 // write
 initial begin
     #20;
+    start_s         = 1'b0;
     mem_en_s        = 1'b1;
     mem_addr_s      = 0;
     mem_we_s        = 1'b1;
-    mem_be_s        = 1'b1;
-    mem_wdata_s     = 32'h0000_0000;
+    mem_wdata_s     = 32'h5555_5555;
 
-    output_length_byte_s = 6'h4;
+    #20;
+
+    mem_addr_s      = 1;
+    mem_we_s        = 1'b1;
+    mem_wdata_s     = 32'h8888_8888;
+
+
+    output_length_byte_s = 6'h8;
+
+    #40
 
     start_s         = 1'b1;
-
 end
 
 
@@ -86,10 +100,11 @@ always @ (posedge done_s)
 begin
     if (done_s)
     begin
+        start_s         = 1'b0;
+
         mem_en_s        = 1'b1;
         mem_addr_s      = 0;
         mem_we_s        = 1'b0;
-        mem_be_s        = 1'b1;
     // mem_rdata
     end
 

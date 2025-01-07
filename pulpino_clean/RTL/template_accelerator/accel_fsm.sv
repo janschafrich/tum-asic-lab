@@ -27,7 +27,7 @@ module accel_fsm
     output  logic [ADDR_WIDTH-1:0]      mem_addr_a,         // address for port a
     output  logic                       mem_we_a,           // write enable
     output  logic [DATA_WIDTH-1:0]      mem_wdata_a,        // send data
-    output  logic [DATA_WIDTH/8-1:0]    mem_be_a,           // burst enable? = bursts of 4 Byte
+    output  logic [DATA_WIDTH/8-1:0]    mem_be_a,           // byte of word enable
     input   logic [DATA_WIDTH-1:0]      mem_rdata_a,        // receive data
 
     output  logic                       mem_en_b,
@@ -42,7 +42,9 @@ module accel_fsm
     // Signals to connect ports
     //////////////////////////////////////////////////////////////////
     
-    enum {IDLE, WRITE, START_ACCEL_ST, WAIT_HASH, READ, DONE}  state, n_state;
+    enum {IDLE, WRITE, PAD, START_ACCEL_ST, WAIT_HASH, READ, DONE}  state, n_state;
+
+    localparam RATE_BIT_COUNT = 1344;        // 1344 bits
 
     logic   [7:0]   addr_cntr_s;
     logic   [7:0]   addr_s;
@@ -51,7 +53,7 @@ module accel_fsm
     logic           clk_s;
     logic           rst_n_s;
     logic           start_s;
-    logic           start_accel;
+    logic           start_hash;
     logic [63:0]    din_s;
     logic           din_valid_s;
     logic           buffer_full_s;
@@ -68,7 +70,7 @@ module accel_fsm
     (
         .clk            (clk_s),
         .rst_n          (rst_n_s),
-        .start          (start_accel),
+        .start          (start_hash),
         .din            (din_s),
         .din_valid      (din_valid_s),
         .buffer_full    (buffer_full_s),
@@ -95,9 +97,11 @@ module accel_fsm
             IDLE: 
                 if (start)      n_state = WRITE;
             WRITE:  // write input from local RAM into accel buffer
-                if ((output_length_byte < addr_cntr_s) && (dout_valid_s == 1'b0)) n_state = START_ACCEL_ST;
+                if ((output_length_byte < addr_cntr_s) && (dout_valid_s == 1'b0)) n_state = PAD;
+            PAD: // pad rate - user_input bits with 10...000...01
+                n_state = START_ACCEL_ST;
             START_ACCEL_ST:
-                if (start_accel)    n_state = WAIT_HASH;
+                if (start_hash)    n_state = WAIT_HASH;
             WAIT_HASH:   // wait for the accel to compute the hash
                 if (dout_valid_s)    n_state = READ;
             READ:   // read hash from accel buffer into local RAM
@@ -111,6 +115,13 @@ module accel_fsm
     // Memory control
     always_comb
     begin    
+        // default behavior
+        mem_en_a    = 1'b0;
+        mem_en_b    = 1'b0;
+        mem_be_a    = 4'hf; // enable all bytes of the word
+        mem_be_b    = 4'hf; // enable all bytes of the word
+        mem_we_a    = 1'b0; // read
+        mem_we_b    = 1'b0; // read  
         unique case (state)
             IDLE : begin
                 // NULL
@@ -118,30 +129,27 @@ module accel_fsm
 
             WRITE: begin // write input from local RAM into accel buffer
                 mem_en_a                = 1'b1;
-                mem_we_a                = 1'b0; // read
-                mem_be_a                = 1'b1; // enable burst
                 mem_en_b                = 1'b1;
-                mem_we_b                = 1'b0; // read
-                mem_be_b                = 1'b1; // enable burst
+            end
+
+            PAD: begin  
+                mem_en_a                = 1'b1;
+                mem_we_a                = 1'b1;
             end
 
             START_ACCEL_ST: begin
-                mem_en_a                = 1'b0;
-                mem_en_b                = 1'b0;      
+                //
             end
 
             WAIT_HASH: begin
-                mem_en_a                = 1'b0;
-                mem_en_b                = 1'b0; 
+                //
             end
 
             READ: begin  // read hash from accel buffer into local RAM
                 mem_en_a                = 1'b1; // enable memory
-                mem_we_a                = 1'b1; // write
-                mem_be_a                = 1'b1; // enable burst
                 mem_en_b                = 1'b1;
+                mem_we_a                = 1'b1; // write
                 mem_we_b                = 1'b1; // write
-                mem_be_b                = 1'b1; // enable burst
             end
 
             DONE : begin
@@ -159,17 +167,21 @@ module accel_fsm
             last_block_s  = 1'b0;
         end
         else begin
+            start_s       = 1'b0;
+            din_valid_s   = 1'b0;
+            last_block_s  = 1'b0;
+            
             unique case (state)
                 IDLE : begin
-                    start_s       = 1'b0;
-                    din_valid_s   = 1'b0;
-                    last_block_s  = 1'b0;
+                    // do nothing
                 end
 
                 WRITE : begin
-                    start_s       = 1'b0;
-                    din_valid_s   = 1'b0;
-                    last_block_s  = 1'b0;
+                    // wait for data to be written into buffer
+                end
+
+                PAD : begin
+
                 end
 
                 START_ACCEL_ST: begin
@@ -181,15 +193,10 @@ module accel_fsm
 
                 WAIT_HASH: begin
                    //extract directly after first permutation 
-                    start_s     = 1'b0;
-                    din_valid_s = 1'b0;
-                    last_block_s = 1'b0;
                 end
 
                 READ: begin
-                    start_s     = 1'b0;
-                    din_valid_s = 1'b0;
-                    last_block_s = 1'b0;
+                    // do nothing
                 end
 
                 DONE : begin
@@ -206,25 +213,32 @@ module accel_fsm
             addr_cntr_s     = 0;
         end
         else begin
+             addr_s         = 0;
             case (state)
 
                 WRITE: begin
                     if (output_length_byte > addr_cntr_s) begin       
                         addr_s      = addr_cntr_s/4;                      // word addressable RAM, word = 32 bit
-                        addr_cntr_s   = addr_cntr_s + 8;                    // 64 bit are transferred at a time
-                    end
+                        addr_cntr_s = addr_cntr_s + 8;
+                    end                    // 64 bit are transferred at a time
+                    else addr_cntr_s = 0;
                 end
 
-                WAIT_HASH: addr_cntr_s = 0;
+                PAD: begin
+                    
+                    // N_BYTES = RATE_BIT_COUNT/8 - output_length_byte 
+                    //  for (i = 0; i < (N_BYTES); i = i + 4)
+                    //  begin
+                    //     addr_s = i/4 + output_length_byte/4             // assumes that output_length is always multiple of 4 byte
+                    //  end
+                end
 
                 READ: begin
                     if (output_length_byte > addr_cntr_s) begin       
                         addr_s      = addr_cntr_s/4;                      // word addressable RAM, word = 32 bit
-                        addr_cntr_s   = addr_cntr_s + 8;                    // 64 bit are transferred at a time
+                        addr_cntr_s = addr_cntr_s + 8;                    // 64 bit are transferred at a time
                     end
                 end
-
-                default: addr_cntr_s = 0;
 
             endcase
         end
@@ -235,27 +249,23 @@ module accel_fsm
         if (!rst_n) begin
 
         end else begin
+            done = 1'b0;
             case (state)
                 IDLE: begin
-                    done    = 1'b0;
                     accel_state = ST_IDLE;
                 end
                 WRITE: begin
-                    done        = 1'b0;
                     accel_state = ST_WRITE;
                 end
 
                 START_ACCEL_ST: begin
-                    done        = 1'b0;
                     accel_state = ST_START_ACCEL;
                 end
                 WAIT_HASH: begin
-                    done        = 1'b0;
                     accel_state = ST_WAIT;
                 end
 
                 READ: begin
-                    done        = 1'b0;
                     accel_state = ST_READ;
                 end
                 DONE: begin
@@ -272,10 +282,10 @@ module accel_fsm
     assign clk_s        = clk;
     assign rst_n_s      = rst_n;
 
-    assign start_accel     = start_s;        
+    assign start_hash     = start_s;        
 
-    assign mem_addr_a       = addr_s;
-    assign mem_addr_b       = addr_s + 1; 
+    assign mem_addr_a       = addr_s + 1;       // port a is multiplexed between cpu and accel
+    assign mem_addr_b       = addr_s;           // port b is always connected with accel
     assign mem_wdata_a      = dout_s[31:0];
     assign mem_wdata_b      = dout_s[63:32];
     assign din_s[31:0]      = mem_rdata_a;

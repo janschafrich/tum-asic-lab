@@ -1,5 +1,5 @@
 -- The Keccak sponge function, designed by Guido Bertoni, Joan Daemen,
--- Michaël Peeters and Gilles Van Assche. For more information, feedback or
+-- Michaï¿½l Peeters and Gilles Van Assche. For more information, feedback or
 -- questions, please refer to our website: http://keccak.noekeon.org/
 
 -- Implementation by the designers,
@@ -22,10 +22,10 @@ library ieee;
 	use ieee.std_logic_unsigned."+"; 
 
 
-entity keccak_tb is
-end keccak_tb;
+entity tb_keccak is
+end tb_keccak;
 	
-architecture tb of keccak_tb is
+architecture tb of tb_keccak is
 
 
 -- components
@@ -82,8 +82,8 @@ p_main: process (clk,rst_n)
 variable counter,count_hash,num_test: integer;
 variable line_in,line_out : line;
 variable temp: std_logic_vector(63 downto 0);	
-file filein : text open read_mode is "../test_vectors/keccak_in.txt";
-file fileout : text open write_mode is "../test_vectors/keccak_out_high_speed_vhdl.txt";
+file filein : text open read_mode is "./test_vectors/keccak_in.txt";
+file fileout : text open write_mode is "./test_vectors/keccak_out_high_speed_vhdl.txt";
 begin
 	if rst_n = '0' then                 -- asynchronous rst_n (active low)
 		st <= INIT;
@@ -161,8 +161,8 @@ begin
 					counter:=0;
 				end if;
 			when END_HASH2 =>
-				last_block<='0';
-				if(dout_valid='1') then
+				last_block<='0';		-- reset output
+				if(dout_valid='1') then	-- read hash
 
 					temp:=dout;
 					hwrite(line_out,temp);
