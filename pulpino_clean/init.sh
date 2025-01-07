@@ -2,7 +2,7 @@
 
 # cd /nas/ei/home/go69hil/asic_wise2425_schaefrich/pulpino_clean
 
-TESTBENCH=${1:-tb}       # top
+TESTBENCH=${1:-tb}       # top tb keccak
 
 
 . setup_cadence.sh
