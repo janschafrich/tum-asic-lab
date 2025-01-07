@@ -12,18 +12,18 @@
 #define status_offest  (0x10u       )
 #define data_offset    (0x80000u    )
 
-#define START_REG       ((volatile uint8_t*) (accel_base + control_offset))
-#define N_ELEMENTS_REG  ((volatile uint8_t*) (accel_base + control_offset + 1))
-#define INCR            ((volatile uint8_t*) (accel_base + control_offset + 2))
-#define STATUS_REG      ((volatile uint8_t*) (accel_base + status_offest))
-#define ACCEL_DATA_BASE ((volatile uint8_t*) (accel_base + data_offset))
+#define START_REG           ((volatile uint8_t*) (accel_base + control_offset))
+#define OUTPUT_LEN_BYTE_REG ((volatile uint8_t*) (accel_base + control_offset + 1))
+#define STATUS_REG          ((volatile uint8_t*) (accel_base + status_offest))
+#define ACCEL_DATA_BASE     ((volatile uint8_t*) (accel_base + data_offset))
 
-#define TEST_DATA_ELEMENTS 17
+#define RATE_BYTES          (1344/8)
+#define N_MEM_WORDS         (RATE_BYTES/4)
 
-#define ENABLE_DEBUG    0
+#define ENABLE_DEBUG        0
 
 /* Declared globally such that variables are not on stack */
-uint8_t *accel_data = ACCEL_DATA_BASE;      // a pointer to a 8bit value
+uint32_t *accel_data = ACCEL_DATA_BASE;      // a pointer to a 8bit value
 
 int t0, t1;
 int count = 0;
@@ -42,14 +42,21 @@ int main(void)
         set_gpio_pin_direction(i, DIR_OUT);
     }
 
-    /* Initialize data array with counter values */
-    for (uint8_t i = 0; i < TEST_DATA_ELEMENTS; i++)
+    /* Initialize memory with input and padding */
+    for (uint8_t i = 0; i < N_MEM_WORDS; i++)
     {
-        accel_data[i] = i;
+        switch (i) {
+            // input
+            case 0:                 accel_data[i] = (uint32_t) 0x55555555; break;
+            // padding
+            case 1:                 accel_data[i] = (uint32_t) 1; break;            
+            case (N_MEM_WORDS-1):   accel_data[i] = (uint32_t) 0x80000000; break;
+            default:                accel_data[i] = (uint32_t) 0; break;
+        }
     }
 
     // verify successful write
-    for (int i = 0; i < TEST_DATA_ELEMENTS; i++)
+    for (int i = 0; i < N_MEM_WORDS; i++)
     {
         printf("0x%x accel_data[%d] = %d \n",&accel_data[i], i, accel_data[i] );
     }
@@ -60,15 +67,6 @@ int main(void)
 
     write_stack();
     
-
-    printf("Before Write 0x%x N_ELEMENTS_REG = %d\n", N_ELEMENTS_REG, *N_ELEMENTS_REG);
-    *N_ELEMENTS_REG =  (uint8_t) TEST_DATA_ELEMENTS;
-    printf("After Write  0x%x N_ELEMENTS_REG = %d\n", N_ELEMENTS_REG, *N_ELEMENTS_REG);
-
-    printf("Before Write 0x%x INCR = %d\n", INCR, *INCR);
-    *INCR =  (uint8_t) 5;
-    printf("After Write  0x%x INCR = %d\n", INCR, *INCR);
-
     printf("Before Write 0x%x START_REG = %d\n", START_REG, *START_REG);
     t0 = get_time();
     *START_REG = (uint8_t) 1;
@@ -84,7 +82,7 @@ int main(void)
 
     uint32_t stack_bytes = check_stack();
 
-    for (int i = 0; i < TEST_DATA_ELEMENTS; i++)
+    for (int i = 0; i < N_MEM_WORDS; i++)
     {
         printf("test_data[%d] = %d\n", i, accel_data[i]);
     }
