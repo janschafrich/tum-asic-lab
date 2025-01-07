@@ -66,7 +66,7 @@ int main(void)
     printf("After Write  0x%x N_ELEMENTS_REG = %d\n", N_ELEMENTS_REG, *N_ELEMENTS_REG);
 
     printf("Before Write 0x%x INCR = %d\n", INCR, *INCR);
-    *INCR =  (uint8_t) 1;
+    *INCR =  (uint8_t) 5;
     printf("After Write  0x%x INCR = %d\n", INCR, *INCR);
 
     printf("Before Write 0x%x START_REG = %d\n", START_REG, *START_REG);
