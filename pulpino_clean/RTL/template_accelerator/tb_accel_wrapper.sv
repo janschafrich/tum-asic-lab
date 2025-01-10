@@ -33,9 +33,7 @@ logic [MEM_DATA_WIDTH-1:0]      mem_rdata_s;
 integer                         i = 0;
 integer                         output_length_byte_s;
 
-
-
-/// reset & clock
+// reset & clock
 initial begin 
     rst_n_s = 1'b0;
     #5
@@ -43,7 +41,7 @@ initial begin
     clk_s   = 1'b1;
 end
 
-always #5 clk_s = ~clk_s;
+always #5 clk_s = ~clk_s;       // period of 10 ns
 
 
 // DUT
@@ -70,8 +68,7 @@ accel_wrapper_inst
     .mem_rdata          (mem_rdata_s)
 );
 
-assign mem_be_s     = 4'hf;
-
+assign mem_be_s     = 4'hf;     // enable all bytes of a word
 
 // stimuli  
 // write
@@ -82,36 +79,20 @@ initial begin
     output_length_byte_r    = 63;       // 512 bit / 8 bit/Byte
     output_length_byte_s    = output_length_byte_r + 1;   
 
-
-    for (i = 0; i <= 42; i = i + 1) begin // 42 x 32bit words
-        @ (posedge clk_s)
-        mem_addr_s = i;
-        if (i < (output_length_byte_s/4))           mem_wdata_s = 32'hffff_ffff;    // 16 x 32 = 512 = max output length
-        else if (i == (output_length_byte_s/4))     mem_wdata_s = 32'h0000_001F;   
-        else if (i == 41)                       mem_wdata_s = 32'h8000_0000;
-        else                                    mem_wdata_s = 32'h0000_0000;
+    // initialize memory
+    for (i = 0; i <= 42; i = i + 1) begin   // 42 x 32bit words
+        @ (posedge clk_s)                   // wait on clock edge
+        mem_addr_s = i;                     
+        // input data 16 x 32 = 512 = max output length
+        if (i < (output_length_byte_s/4))           mem_wdata_s = 32'hffff_ffff; 
+        // padding
+        else if (i == (output_length_byte_s/4))     mem_wdata_s = 32'h0000_001F;
+        else if (i == 41)                           mem_wdata_s = 32'h8000_0000;
+        else                                        mem_wdata_s = 32'h0000_0000;
     end
     
     if (i > 41)           start_s = 1'b1;
 
 end
-
-
-
-// read
-// always @ (posedge done_s)
-// begin
-//     if (done_s)
-//     begin
-
-
-//         mem_en_s        = 1'b1;
-//         mem_addr_s      = 0;
-//         mem_we_s        = 1'b0;
-//     // mem_rdata
-//     end
-
-// end
-
 
 endmodule
