@@ -21,7 +21,7 @@ acc_error_t                     accel_error_s;
 
 logic                           start_s;
 logic                           done_s;
-logic [5:0]                     output_length_byte_s;
+logic [5:0]                     output_length_byte_r;
 
 logic                           mem_en_s;
 logic [MEM_ADDR_WIDTH-1:0]      mem_addr_s;
@@ -31,6 +31,7 @@ logic [MEM_DATA_WIDTH-1:0]      mem_wdata_s;
 logic [MEM_DATA_WIDTH-1:0]      mem_rdata_s;
 
 integer                         i = 0;
+integer                         output_length_byte_s;
 
 
 
@@ -60,7 +61,7 @@ accel_wrapper_inst
     .accel_error        (accel_error_s),
     .start              (start_s),
     .done               (done_s),
-    .output_length_byte (output_length_byte_s),
+    .output_length_byte (output_length_byte_r),
     .mem_en             (mem_en_s),
     .mem_addr           (mem_addr_s),
     .mem_we             (mem_we_s),
@@ -75,21 +76,26 @@ assign mem_be_s     = 4'hf;
 // stimuli  
 // write
 initial begin 
-    start_s         = 1'b0;
-    mem_en_s        = 1'b1;
-    mem_we_s        = 1'b1;
+    start_s                 = 1'b0;
+    mem_en_s                = 1'b1;
+    mem_we_s                = 1'b1;
+    output_length_byte_r    = 63;       // 512 bit / 8 bit/Byte
+    output_length_byte_s    = output_length_byte_r + 1;   
 
-    for (i = 0; i <= 168; i = i + 4) begin
+
+    for (i = 0; i <= 42; i = i + 1) begin // 42 x 32bit words
         @ (posedge clk_s)
-        mem_addr_s = i / 4;
-        if (i == 0)         mem_wdata_s = 32'h5555_5555;
-        else if (i == 4)    mem_wdata_s = 32'h8000_0000;   
-        else if (i == 164)  mem_wdata_s = 32'h0000_0001;
-        else                mem_wdata_s = 32'h0000_0000;
+        mem_addr_s = i;
+        if (i < (output_length_byte_s/4))           mem_wdata_s = 32'hffff_ffff;    // 16 x 32 = 512 = max output length
+        else if (i == (output_length_byte_s/4))     mem_wdata_s = 32'h0000_001F;   
+        else if (i == 41)                       mem_wdata_s = 32'h8000_0000;
+        else                                    mem_wdata_s = 32'h0000_0000;
     end
-    if (i > 168)           start_s = 1'b1;
+    
+    if (i > 41)           start_s = 1'b1;
 
 end
+
 
 
 // read

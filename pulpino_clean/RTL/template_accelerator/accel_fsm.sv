@@ -47,6 +47,7 @@ module accel_fsm
     localparam RATE_BIT_COUNT = 1344;        // 1344 bits
 
     integer  i;
+    logic           din_valid_reg;
 
     logic   [7:0]   byte_cntr_s;
     logic   [7:0]   addr_s;
@@ -73,7 +74,7 @@ module accel_fsm
         .rst_n          (rst_n_s),
         .start          (start_hash),
         .din            (din_s),
-        .din_valid      (din_valid_s),
+        .din_valid      (din_valid_reg),
         .buffer_full    (buffer_full_s),
         .last_block     (last_block_s),
         .ready          (ready_s),
@@ -98,11 +99,11 @@ module accel_fsm
             IDLE: 
                 if (start)      n_state = WRITE;
             WRITE:  // write input from local RAM into accel buffer
-                if ((byte_cntr_s >= RATE_BIT_COUNT/8) && (last_block_s == 1'b1)) n_state = WAIT_HASH;
+                if (buffer_full_s == 1'b1) n_state = WAIT_HASH; // buffer_full ?
             WAIT_HASH:   // wait for the accel to compute the hash
-                if (dout_valid_s)    n_state = READ;
+                if (ready_s)    n_state = READ;
             READ:   // read hash from accel buffer into local RAM
-                if ((byte_cntr_s >= output_length_byte) && (dout_valid_s == 1'b1)) n_state = DONE;
+                if ((byte_cntr_s >= output_length_byte)) n_state = DONE;
             DONE: begin
                 // transition to idle with reset
             end
@@ -153,7 +154,7 @@ module accel_fsm
             din_valid_s     <= 1'b0;
             addr_s          <= 0;
             byte_cntr_s     <= 0;
-            start_hash      <= 1'b0;
+            start_hash      <= 1'b1;
             last_block_s    <= 1'b0;
         end
         else begin
@@ -170,24 +171,27 @@ module accel_fsm
                 WRITE : begin
                     if (byte_cntr_s < RATE_BIT_COUNT/8) begin       
                         addr_s      <= byte_cntr_s/4;                      // word addressable RAM, word = 32 bit
-                        byte_cntr_s <= byte_cntr_s + 8;
+                        byte_cntr_s <= byte_cntr_s + 8;                      // 64 bit are transferred at a time
                         din_valid_s <= 1'b1;
-                    end                    // 64 bit are transferred at a time
-                    if (byte_cntr_s == RATE_BIT_COUNT/8) begin
-                        start_hash      <= 1'b1;
-                        last_block_s    <= 1'b1;
                     end
+                    // if (byte_cntr_s >= RATE_BIT_COUNT/8) begin   // wait a cycle for the last 64 bit word to be transferred
+                        
+                    // end
                 end
 
                 WAIT_HASH: begin
-                    byte_cntr_s     <= 0;
+                    last_block_s <= 1'b1;
+                    byte_cntr_s  <= 0;
+
                    //extract directly after first permutation 
                 end
 
                 READ: begin
-                     if (byte_cntr_s < output_length_byte) begin       
-                        addr_s      <= byte_cntr_s/4;                      // word addressable RAM, word = 32 bit
-                        byte_cntr_s <= byte_cntr_s + 8;                    // 64 bit are transferred at a time
+                    if (dout_valid_s) begin
+                        if (byte_cntr_s < output_length_byte) begin       
+                            addr_s      <= byte_cntr_s/4;                      // word addressable RAM, word = 32 bit
+                            byte_cntr_s <= byte_cntr_s + 8;                    // 64 bit are transferred at a time
+                        end
                     end
                 end
 
@@ -212,11 +216,8 @@ module accel_fsm
                     accel_state = ST_WRITE;
                 end
 
-                // START_ACCEL_ST: begin
-                //     accel_state = ST_START_ACCEL;
-                // end
                 WAIT_HASH: begin
-                    accel_state = ST_WAIT;
+                    accel_state = ST_WAIT_HASH;
                 end
 
                 READ: begin
@@ -230,16 +231,24 @@ module accel_fsm
         end
     end
 
+    // delay valid signal 
+    always_ff @ (posedge clk, negedge rst_n)
+    begin
+        if (!rst_n) begin
+            din_valid_reg <= 1'b0;
+        end
+        else
+        din_valid_reg <= din_valid_s;
+    end
+
     //////////////////////////////////////////////////////////////////
     // Assignments
     //////////////////////////////////////////////////////////////////    
     assign clk_s        = clk;
-    assign rst_n_s      = rst_n;
+    assign rst_n_s      = rst_n;   
 
-    // assign start_hash     = start_hash;        
-
-    assign mem_addr_a       = addr_s + 1;       // port a is multiplexed between cpu and accel
-    assign mem_addr_b       = addr_s;           // port b is always connected with accel
+    assign mem_addr_a       = addr_s;       // port a is multiplexed between cpu and accel
+    assign mem_addr_b       = addr_s + 1;           // port b is always connected with accel
     assign mem_wdata_a      = dout_s[31:0];
     assign mem_wdata_b      = dout_s[63:32];
     assign din_s[31:0]      = mem_rdata_a;

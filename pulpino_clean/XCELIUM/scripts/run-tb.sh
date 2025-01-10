@@ -7,3 +7,4 @@ export IPS=${RTL}/ips
 STIM=../
 
 xrun $1 -64bit -f ../scripts/sim.args -access +rwc -define PULP_FPGA_EMUL -define STIM_PATH=\"${STIM}\" -disable_sem2009 -v93 -timescale 1ps/1ps -simvisargs '-input ../scripts/sim_wave.tcl' -top tb_accel_wrapper -gui
+# xrun $1 -64bit -f ../scripts/sim.args -access +rwc -define PULP_FPGA_EMUL -define STIM_PATH=\"${STIM}\" -disable_sem2009 -v93 -timescale 1ps/1ps -simvisargs -top tb_accel_wrapper -gui '-input ../scripts/restore.tcl'

@@ -15,6 +15,7 @@
 #define START_REG           ((volatile uint8_t*) (accel_base + control_offset))
 #define OUTPUT_LEN_BYTE_REG ((volatile uint8_t*) (accel_base + control_offset + 1))
 #define STATUS_REG          ((volatile uint8_t*) (accel_base + status_offest))
+#define DONE_REG            ((volatile uint8_t*) (accel_base + status_offest + 1))
 #define ACCEL_DATA_BASE     ((volatile uint8_t*) (accel_base + data_offset))
 
 #define RATE_BYTES          (1344/8)
@@ -23,7 +24,13 @@
 #define ENABLE_DEBUG        0
 
 /* Declared globally such that variables are not on stack */
-uint32_t *accel_data = ACCEL_DATA_BASE;      // a pointer to a 8bit value
+uint8_t *accel_data = ACCEL_DATA_BASE;   
+
+uint8_t input[64];
+size_t inlen = 64;
+
+uint8_t output[64];
+size_t outlen = 64;
 
 int t0, t1;
 int count = 0;
@@ -42,21 +49,25 @@ int main(void)
         set_gpio_pin_direction(i, DIR_OUT);
     }
 
+    printf("Before Write 0x%x OUTPUT_LEN_BYTEREG = %d\n", OUTPUT_LEN_BYTE_REG, *OUTPUT_LEN_BYTE_REG);
+    *OUTPUT_LEN_BYTE_REG = (uint8_t) (outlen - 1); // 6 bit register
+    printf("After Write  0x%x OUTPUT_LEN_BYTE_REG = %d\n", OUTPUT_LEN_BYTE_REG, *OUTPUT_LEN_BYTE_REG);
+
     /* Initialize memory with input and padding */
-    for (uint8_t i = 0; i < N_MEM_WORDS; i++)
+    for (uint8_t i = 0; i < RATE_BYTES; i++)
     {
-        switch (i) {
-            // input
-            case 0:                 accel_data[i] = (uint32_t) 0x55555555; break;
-            // padding
-            case 1:                 accel_data[i] = (uint32_t) 1; break;            
-            case (N_MEM_WORDS-1):   accel_data[i] = (uint32_t) 0x80000000; break;
-            default:                accel_data[i] = (uint32_t) 0; break;
-        }
+        if (i < outlen)
+        {
+            accel_data[i] = (uint8_t) 0xFF;
+            input[i]      = (uint8_t)  0xFF;
+        }      
+        else if (i == outlen)           accel_data[i] = (uint8_t) 0x1F;
+        else if (i == RATE_BYTES - 1)   accel_data[i] = (uint8_t) 0x80;
+        else                            accel_data[i] = (uint8_t) 0x00;
     }
 
-    // verify successful write
-    for (int i = 0; i < N_MEM_WORDS; i++)
+    // print written values
+    for (int i = 0; i < RATE_BYTES; i++)
     {
         printf("0x%x accel_data[%d] = %d \n",&accel_data[i], i, accel_data[i] );
     }
@@ -66,26 +77,34 @@ int main(void)
     printf("Accel: Error  Address 0x%x=%d \n",   STATUS_REG, (*START_REG & 0xF0) >> 4);
 
     write_stack();
-    
+
+    shake128(output, outlen, input, inlen);
+   
     printf("Before Write 0x%x START_REG = %d\n", START_REG, *START_REG);
     t0 = get_time();
     *START_REG = (uint8_t) 1;
     printf("After Write  0x%x START_REG = %d\n", START_REG, *START_REG);
 
-    // busy wait until Accelerator is done and resets the start bit
     printf("Accel: Addr 0x%x  Status=%d     Error=%d \n",  STATUS_REG,  *STATUS_REG & 0x0F, (*STATUS_REG & 0xF0) >> 4);
-
-    while (*START_REG == 1);
+    // busy wait for accelerator 
+    while (*DONE_REG == 0);
     t1 = get_time();
     printf("Accel: Addr 0x%x  Status=%d     Error=%d \n",  STATUS_REG,  *STATUS_REG & 0x0F, (*STATUS_REG & 0xF0) >> 4);
     
 
     uint32_t stack_bytes = check_stack();
 
-    for (int i = 0; i < N_MEM_WORDS; i++)
+    for (int i = 0; i < outlen; i++)
     {
-        printf("test_data[%d] = %d\n", i, accel_data[i]);
+        if (output[i] == accel_data[i])
+        {
+            printf("CORRECT");
+        }
+        else printf("ERROR ");
+        printf(" SW output[%d] = %d ; Accel output[%d] = %d \n",i, output[i], i, accel_data[i]);
     }
+
+
 
     /* Print elapsed time and stack consumption */
     printf("\nElapsed cycles: %d\n", t1-t0);

@@ -163,6 +163,7 @@ module accel_top_wrapper
     // Config reg connections -  connect register to memory file
     //////////////////////////////////////////////////////////////////////////////////////
     assign status_vec[0][7:0]   = {accel_err, accel_state};     // 7:4 = error, 3:0 = state
+    assign status_vec[0][8]     = done_int;
     assign start_int            = control_vec[0][0];            // bit 0 of word 0 is the start signal of type integer
     assign output_length_byte   = control_vec[0][13:8];         // byte 1 of word 0 is max_cnt
     // assign incr                 = control_vec[0][23:16];

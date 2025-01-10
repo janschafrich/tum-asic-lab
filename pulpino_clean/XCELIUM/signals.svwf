@@ -35,6 +35,13 @@ set id [waveform add -signals [subst  {
 	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.state}]}
 	} ]]
 set id [waveform add -signals [subst  {
+	{[format {tb_accel_wrapper.i}]}
+	} ]]
+set id [waveform add -signals [subst  {
+	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.byte_cntr_s[7:0]}]}
+	} ]]
+waveform format $id -radix %d
+set id [waveform add -signals [subst  {
 	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.start_hash}]}
 	} ]]
 set id [waveform add -signals [subst  {
@@ -43,34 +50,33 @@ set id [waveform add -signals [subst  {
 set id [waveform add -signals [subst  {
 	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:din}]}
 	} ]]
-waveform hierarchy collapse $id
 set id [waveform add -signals [subst  {
 	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:din_valid}]}
-	} ]]
-set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:dout}]}
-	} ]]
-set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:dout_valid}]}
 	} ]]
 set id [waveform add -signals [subst  {
 	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:last_block}]}
 	} ]]
 set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:permutation_computed}]}
-	} ]]
-set id [waveform add -signals [subst  {
 	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:ready}]}
-	} ]]
-set id [waveform add -signals [subst  {
-	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:reg_data}]}
 	} ]]
 set id [waveform add -signals [subst  {
 	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:round_in}]}
 	} ]]
+waveform hierarchy expand $id
+set id2 [lindex [waveform hierarchy content $id] 0]
+waveform hierarchy expand $id2
+set id2 [lindex [waveform hierarchy content $id] 2]
+waveform hierarchy collapse $id2
+waveform hierarchy collapse $id
 set id [waveform add -signals [subst  {
 	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:round_out}]}
 	} ]]
+waveform hierarchy expand $id
+set id2 [lindex [waveform hierarchy content $id] 0]
+waveform hierarchy expand $id2
+set id2 [lindex [waveform hierarchy content $id] 4]
+waveform hierarchy expand $id2
+waveform hierarchy collapse $id
 set id [waveform add -signals [subst  {
 	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:start}]}
 	} ]]
@@ -80,8 +86,44 @@ set id [waveform add -signals [subst  {
 set id [waveform add -signals [subst  {
 	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:buffer_in:buffer_data}]}
 	} ]]
+waveform hierarchy collapse $id
 set id [waveform add -signals [subst  {
 	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:buffer_in:mode}]}
 	} ]]
+set id [waveform add -signals [subst  {
+	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:buffer_in:count_in_words}]}
+	} ]]
+waveform format $id -radix %d
+set id [waveform add -signals [subst  {
+	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:dout}]}
+	} ]]
+set id [waveform add -signals [subst  {
+	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:dout_valid}]}
+	} ]]
+set id [waveform add -signals [subst  {
+	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:counter_nr_rounds}]}
+	} ]]
+waveform format $id -radix %d
+set id [waveform add -signals [subst  {
+	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:reg_data}]}
+	} ]]
+waveform hierarchy expand $id
+set id2 [lindex [waveform hierarchy content $id] 0]
+waveform hierarchy expand $id2
+set id2 [lindex [waveform hierarchy content $id] 1]
+waveform hierarchy expand $id2
+set id2 [lindex [waveform hierarchy content $id] 2]
+waveform hierarchy expand $id2
+set id2 [lindex [waveform hierarchy content $id] 3]
+waveform hierarchy expand $id2
+set id2 [lindex [waveform hierarchy content $id] 4]
+waveform hierarchy expand $id2
+waveform hierarchy collapse $id
+set id [waveform add -signals [subst  {
+	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:reg_data_vector}]}
+	} ]]
+set id [waveform add -signals [subst  {
+	{[format {tb_accel_wrapper.accel_wrapper_inst.accel_fsm_inst.keccak_inst:buffer_in:dout_buffer_in}]}
+	} ]]
 
-waveform xview limits 208739781fs 1550917061fs
+waveform xview limits 587.20256ns 754.97472ns
