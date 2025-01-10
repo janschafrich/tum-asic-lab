@@ -21,22 +21,26 @@
 #define RATE_BYTES          (1344/8)
 #define N_MEM_WORDS         (RATE_BYTES/4)
 
+
+// User Configuration Parameters:
+#define INPUT_LEN_BYTE      16      // HW: max 64
+#define OUTPUT_LEN_BYTE     32      // HW: max 64
+
 #define ENABLE_DEBUG        0
+#define MEASURE_ACCEL       1        
 
 /* Declared globally such that variables are not on stack */
 uint8_t *accel_data = ACCEL_DATA_BASE;   
 
-uint8_t input[64];
-size_t inlen = 64;
+uint8_t input[INPUT_LEN_BYTE];
+const size_t inlen = INPUT_LEN_BYTE;
 
-uint8_t output[64];
-size_t outlen = 64;
+uint8_t output[OUTPUT_LEN_BYTE];
+const size_t outlen = OUTPUT_LEN_BYTE;
 
 int t0, t1;
 int count = 0;
 
-enum acc_state {ST_IDLE, ST_RUNNING};
-enum acc_error {ER_OKAY, ER_INVALID_CFG, ER_OTHERS};
 
 int main(void)
 {
@@ -49,61 +53,93 @@ int main(void)
         set_gpio_pin_direction(i, DIR_OUT);
     }
 
-    printf("Before Write 0x%x OUTPUT_LEN_BYTEREG = %d\n", OUTPUT_LEN_BYTE_REG, *OUTPUT_LEN_BYTE_REG);
-    *OUTPUT_LEN_BYTE_REG = (uint8_t) (outlen - 1); // 6 bit register
-    printf("After Write  0x%x OUTPUT_LEN_BYTE_REG = %d\n", OUTPUT_LEN_BYTE_REG, *OUTPUT_LEN_BYTE_REG);
+#if ENABLE_DEBUG
+    printf("Before Write 0x%x OUTPUT_LEN_BYTE_REG = %d\n", OUTPUT_LEN_BYTE_REG, *OUTPUT_LEN_BYTE_REG);
+#endif
 
+    *OUTPUT_LEN_BYTE_REG = (uint8_t) (outlen - 1); // 6 bit register
+
+#if ENABLE_DEBUG
+    printf("After Write  0x%x OUTPUT_LEN_BYTE_REG = %d\n", OUTPUT_LEN_BYTE_REG, *OUTPUT_LEN_BYTE_REG);
+#endif
     /* Initialize memory with input and padding */
     for (uint8_t i = 0; i < RATE_BYTES; i++)
     {
-        if (i < outlen)
+        if (i < inlen)
         {
-            accel_data[i] = (uint8_t) 0xFF;
-            input[i]      = (uint8_t)  0xFF;
-        }      
-        else if (i == outlen)           accel_data[i] = (uint8_t) 0x1F;
+            accel_data[i] = (uint8_t) 0xFF;     // input data
+            input[i]      = (uint8_t) 0xFF;     // input data
+        } // padding     
+        else if (i == inlen)            accel_data[i] = (uint8_t) 0x1F;
         else if (i == RATE_BYTES - 1)   accel_data[i] = (uint8_t) 0x80;
         else                            accel_data[i] = (uint8_t) 0x00;
     }
 
-    // print written values
-    for (int i = 0; i < RATE_BYTES; i++)
+    printf("\n      d=%d Byte Input: 0x", inlen);
+    for (int i = 0; i < inlen; i++)
     {
-        printf("0x%x accel_data[%d] = %d \n",&accel_data[i], i, accel_data[i] );
+        printf("%x", accel_data[i]);
     }
 
-    printf("Idle:\n");
+#if ENABLE_DEBUG
+    // check memory for succesfull write
+    for (int i = 0; i < RATE_BYTES; i++)
+    {
+        printf("0x%x accel_input[%d] = %d \n",&accel_data[i], i, accel_data[i] );
+    }
+
     printf("Accel: Status Address 0x%x=%d \n",  STATUS_REG,  *START_REG & 0x0F);
     printf("Accel: Error  Address 0x%x=%d \n",   STATUS_REG, (*START_REG & 0xF0) >> 4);
+#endif
 
     write_stack();
 
-    shake128(output, outlen, input, inlen);
    
+#if ENABLE_DEBUG
     printf("Before Write 0x%x START_REG = %d\n", START_REG, *START_REG);
+#endif
+
     t0 = get_time();
+
+#if MEASURE_ACCEL
     *START_REG = (uint8_t) 1;
+
+#if ENABLE_DEBUG
     printf("After Write  0x%x START_REG = %d\n", START_REG, *START_REG);
 
     printf("Accel: Addr 0x%x  Status=%d     Error=%d \n",  STATUS_REG,  *STATUS_REG & 0x0F, (*STATUS_REG & 0xF0) >> 4);
+#endif
+
     // busy wait for accelerator 
     while (*DONE_REG == 0);
     t1 = get_time();
-    printf("Accel: Addr 0x%x  Status=%d     Error=%d \n",  STATUS_REG,  *STATUS_REG & 0x0F, (*STATUS_REG & 0xF0) >> 4);
+    shake128(output, outlen, input, inlen);
+#else
+    shake128(output, outlen, input, inlen);
+    t1 = get_time();
+#endif // MEASURE_ACCEL
+    
     
 
     uint32_t stack_bytes = check_stack();
-
+#if ENABLE_DEBUG
     for (int i = 0; i < outlen; i++)
     {
-        if (output[i] == accel_data[i])
-        {
-            printf("CORRECT");
-        }
-        else printf("ERROR ");
-        printf(" SW output[%d] = %d ; Accel output[%d] = %d \n",i, output[i], i, accel_data[i]);
+        if (output[i] == accel_data[i]) printf("CORRECT");
+        else                            printf("ERROR  ");
+        printf(" SW hash[%d] \t= %x \tAccel hash[%d] \t= %x \n",i, output[i], i, accel_data[i]);
     }
-
+#endif
+    printf("\nAccel d=%d Byte Hash: 0x", outlen);
+    for (int i = 0; i < outlen; i++)
+    {
+        printf("%x", accel_data[i]);
+    }
+    printf("\nSW    d=%d Byte Hash: 0x", outlen);
+    for (int i = 0; i < outlen; i++)
+    {
+        printf("%x", output[i]);
+    }
 
 
     /* Print elapsed time and stack consumption */
