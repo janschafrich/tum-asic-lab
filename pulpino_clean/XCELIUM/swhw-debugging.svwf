@@ -24,8 +24,25 @@ set id [waveform add -signals [subst  {
 	{[format {tb.top_i.accelerator_i.accel_wrapper_inst.done}]}
 	} ]]
 set id [waveform add -signals [subst  {
+	{[format {tb.top_i.accelerator_i.accel_wrapper_inst.accel_fsm_inst.keccak_inst:dout_valid}]}
+	} ]]
+set id [waveform add -signals [subst  {
+	{[format {tb.top_i.accelerator_i.accel_wrapper_inst.accel_fsm_inst.keccak_inst:dout}]}
+	} ]]
+set id [waveform add -signals [subst  {
+	{[format {tb.top_i.accelerator_i.accel_wrapper_inst.accel_fsm_inst.byte_cntr_s[7:0]}]}
+	} ]]
+waveform format $id -radix %d
+set id [waveform add -signals [subst  {
+	{[format {tb.top_i.accelerator_i.accel_wrapper_inst.accel_fsm_inst.addr_s[7:0]}]}
+	} ]]
+waveform format $id -radix %d
+set id [waveform add -signals [subst  {
 	{[format {tb.top_i.accelerator_i.accel_wrapper_inst.ram_inst.mem[0:41]}]}
 	} ]]
+waveform hierarchy expand $id
+set id2 [lindex [waveform hierarchy content $id] 0]
+waveform format $id2 -radix %x
 set id [waveform add -signals [subst  {
 	{[format {tb.top_i.accelerator_i.accel_wrapper_inst.accel_fsm_inst.rst_n}]}
 	} ]]
@@ -37,12 +54,6 @@ set id [waveform add -signals [subst  {
 	} ]]
 set id [waveform add -signals [subst  {
 	{[format {tb.top_i.accelerator_i.accel_wrapper_inst.accel_fsm_inst.keccak_inst:din_valid}]}
-	} ]]
-set id [waveform add -signals [subst  {
-	{[format {tb.top_i.accelerator_i.accel_wrapper_inst.accel_fsm_inst.keccak_inst:dout}]}
-	} ]]
-set id [waveform add -signals [subst  {
-	{[format {tb.top_i.accelerator_i.accel_wrapper_inst.accel_fsm_inst.keccak_inst:dout_valid}]}
 	} ]]
 set id [waveform add -signals [subst  {
 	{[format {tb.top_i.accelerator_i.accel_wrapper_inst.accel_fsm_inst.keccak_inst:last_block}]}
@@ -72,4 +83,4 @@ set id [waveform add -signals [subst  {
 	{[format {tb.top_i.accelerator_i.accel_wrapper_inst.accel_fsm_inst.start}]}
 	} ]]
 
-waveform xview limits 0 32047875ns
+waveform xview limits 99234492.1875ns 99234882.8125ns

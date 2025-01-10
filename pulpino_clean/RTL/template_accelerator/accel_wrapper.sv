@@ -102,7 +102,7 @@ module accel_wrapper
     #(
       .ADDR_WIDTH ( MEM_ADDR_WIDTH      ),
       .DATA_WIDTH ( MEM_DATA_WIDTH      ),
-      .DEPTH      ( 42           )
+      .DEPTH      ( 42           )              // 42 * 32 bit = 1344 bit = SHAKE128 rate
     )
     ram_inst
     (
