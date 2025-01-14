@@ -12,10 +12,11 @@ import cfg_types_pkg::*;
 module accel_top_wrapper
 #(
     parameter AXI_ADDR_WIDTH        = 32,
-    parameter AXI_ID_WIDTH          = 4,
+    parameter AXI_DATA_WIDTH        = 32,
+    parameter AXI_SLAVE_ID_WIDTH    = 4,
+    parameter AXI_MASTER_ID_WIDTH   = 2,
     parameter AXI_USER_WIDTH        = 1,
     parameter INT_ADDR_WIDTH        = 20,
-    parameter DATA_WIDTH            = 32,
     parameter MEM_DEPTH             = 1024,
     parameter CTRL_WORDS            = 2,
     parameter STAT_WORDS            = 2
@@ -29,9 +30,9 @@ module accel_top_wrapper
     // input logic                     axi_mem_req  ,
     // input logic[INT_ADDR_WIDTH-1:0] axi_mem_addr ,
     // input logic                     axi_mem_we   ,
-    // input logic[DATA_WIDTH/8-1:0]   axi_mem_be   ,
-    // input logic[DATA_WIDTH-1:0]     axi_mem_rdata,
-    // input logic[DATA_WIDTH-1:0]     axi_mem_wdata
+    // input logic[AXI_DATA_WIDTH/8-1:0]   axi_mem_be   ,
+    // input logic[AXI_DATA_WIDTH-1:0]     axi_mem_rdata,
+    // input logic[AXI_DATA_WIDTH-1:0]     axi_mem_wdata
 
     AXI_BUS.Slave                   axi_slave
 );
@@ -43,15 +44,15 @@ module accel_top_wrapper
 
     // Determining number of address bits for config register
     localparam CFG_ADDR_BITS = $clog2(CTRL_WORDS + STAT_WORDS);
-    localparam ALIGN_BITS = $clog2(DATA_WIDTH/8);
+    localparam ALIGN_BITS = $clog2(AXI_DATA_WIDTH/8);
 
     // Struct for clearing start bit
     typedef struct {
         logic                           en;
         logic [CFG_ADDR_BITS-1:0]       addr;
         logic                           we;
-        logic [DATA_WIDTH/8-1:0]        be;
-        logic [DATA_WIDTH-1:0]          wdata;
+        logic [AXI_DATA_WIDTH/8-1:0]    be;
+        logic [AXI_DATA_WIDTH-1:0]      wdata;
     } clear_t;
 
     clear_t CTRL_CLEAR_START;
@@ -69,19 +70,19 @@ module accel_top_wrapper
     logic [INT_ADDR_WIDTH-1:0]  axi_mem_addr_tmp;
     logic [INT_ADDR_WIDTH-1:0]  axi_mem_addr;
     logic                       axi_mem_we;
-    logic [DATA_WIDTH/8-1:0]    axi_mem_be;
-    logic [DATA_WIDTH-1:0]      axi_mem_wdata;
-    logic [DATA_WIDTH-1:0]      axi_mem_rdata;
+    logic [AXI_DATA_WIDTH/8-1:0]axi_mem_be;
+    logic [AXI_DATA_WIDTH-1:0]  axi_mem_wdata;
+    logic [AXI_DATA_WIDTH-1:0]  axi_mem_rdata;
 
-    logic [DATA_WIDTH-1:0]      axi_mem_rdata_acc;
+    logic [AXI_DATA_WIDTH-1:0]  axi_mem_rdata_acc;
 
     // Bus to config reg
     logic                       cfg_en;
     logic [CFG_ADDR_BITS-1:0]   cfg_addr;
     logic                       cfg_we;
-    logic [DATA_WIDTH/8-1:0]    cfg_be;
-    logic [DATA_WIDTH-1:0]      cfg_wdata;
-    logic [DATA_WIDTH-1:0]      cfg_rdata;
+    logic [AXI_DATA_WIDTH/8-1:0]cfg_be;
+    logic [AXI_DATA_WIDTH-1:0]  cfg_wdata;
+    logic [AXI_DATA_WIDTH-1:0]  cfg_rdata;
     logic                       addr_is_config, addr_is_config_reg;
 
 
@@ -89,8 +90,8 @@ module accel_top_wrapper
     logic [INT_ADDR_WIDTH-1:0]  acc_addr;
 
     // Config and control signals
-    logic [DATA_WIDTH-1:0]      control_vec [CTRL_WORDS];
-    logic [DATA_WIDTH-1:0]      status_vec  [STAT_WORDS];
+    logic [AXI_DATA_WIDTH-1:0]  control_vec [CTRL_WORDS];
+    logic [AXI_DATA_WIDTH-1:0]  status_vec  [STAT_WORDS];
 
     // Accelerator state and error
     acc_state_t accel_state;
@@ -136,7 +137,7 @@ module accel_top_wrapper
     #(
         .ASYNC_READ     ( 0                 ),      // parameters
         .ADDR_WIDTH     ( CFG_ADDR_BITS     ),
-        .DATA_WIDTH     ( DATA_WIDTH        ),
+        .DATA_WIDTH     ( AXI_DATA_WIDTH    ),
         .N_CTRL_WORDS   ( CTRL_WORDS        ),
         .N_STAT_WORDS   ( STAT_WORDS        ),
         .REGISTER_STATUS( 1'b1              )
@@ -171,8 +172,8 @@ module accel_top_wrapper
     genvar i,j;
     generate
         for (i=1; i<STAT_WORDS; i++)
-            for (j=0; j<DATA_WIDTH/8; j++)
-                assign status_vec[i][8*j + 7 -:8] = j + DATA_WIDTH/8*i;
+            for (j=0; j<AXI_DATA_WIDTH/8; j++)
+                assign status_vec[i][8*j + 7 -:8] = j + AXI_DATA_WIDTH/8*i;
     endgenerate
 
 
@@ -181,11 +182,11 @@ module accel_top_wrapper
     //////////////////////////////////////////////////////////////////////////////////////
     axi_mem_if_SP_wrap
     #(
-      .AXI_ADDR_WIDTH  ( AXI_ADDR_WIDTH         ),
-      .AXI_DATA_WIDTH  ( DATA_WIDTH             ),
-      .AXI_ID_WIDTH    ( AXI_ID_WIDTH           ),
-      .AXI_USER_WIDTH  ( AXI_USER_WIDTH         ),
-      .MEM_ADDR_WIDTH  ( INT_ADDR_WIDTH         )
+      .AXI_ADDR_WIDTH      ( AXI_ADDR_WIDTH         ),
+      .AXI_DATA_WIDTH     ( AXI_DATA_WIDTH     ),
+      .AXI_ID_WIDTH  ( AXI_SLAVE_ID_WIDTH   ),
+      .AXI_USER_WIDTH      ( AXI_USER_WIDTH         ),
+      .MEM_ADDR_WIDTH       ( INT_ADDR_WIDTH         )
     )
     axi_mem_if
     (
@@ -211,7 +212,7 @@ module accel_top_wrapper
     accel_wrapper
     #(
         .MEM_ADDR_WIDTH ( $clog2(MEM_DEPTH) ),
-        .MEM_DATA_WIDTH ( DATA_WIDTH        ),
+        .MEM_DATA_WIDTH ( AXI_DATA_WIDTH        ),
         .MEM_DEPTH      ( MEM_DEPTH         )
     )
     accel_wrapper_inst

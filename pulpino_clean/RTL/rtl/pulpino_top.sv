@@ -306,11 +306,12 @@ module pulpino_top
 
   accel_top_wrapper
   #(
-    .AXI_ADDR_WIDTH       ( `AXI_ADDR_WIDTH      ),
-    .AXI_DATA_WIDTH       ( 20      ),
-    .AXI_SLAVE_ID_WIDTH   ( `AXI_ID_SLAVE_WIDTH  ),
+    .AXI_ADDR_WIDTH       ( `AXI_ADDR_WIDTH       ),
+    .AXI_DATA_WIDTH       ( `AXI_DATA_WIDTH       ),
+    .AXI_SLAVE_ID_WIDTH   ( `AXI_ID_SLAVE_WIDTH   ),
     .AXI_MASTER_ID_WIDTH  ( `AXI_ID_MASTER_WIDTH  ),
-    .AXI_USER_WIDTH       ( `AXI_USER_WIDTH        ),
+    .AXI_USER_WIDTH       ( `AXI_USER_WIDTH       ),
+    .INT_ADDR_WIDTH       (20                     ),
     .MEM_DEPTH            (1024                   ),
     .CTRL_WORDS           (4                      ),
     .STAT_WORDS           (4                      )

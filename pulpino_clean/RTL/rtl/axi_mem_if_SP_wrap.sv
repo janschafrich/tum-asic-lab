@@ -38,7 +38,7 @@ module axi_mem_if_SP_wrap
 
   axi_mem_if_SP
   #(
-    .AXI4_ADDRESS_WIDTH  ( AXI_ADDR_WIDTH  ),
+    .AXI4_ADDRESS_WIDTH     ( AXI_ADDR_WIDTH  ),
     .AXI4_RDATA_WIDTH    ( AXI_DATA_WIDTH  ),
     .AXI4_WDATA_WIDTH    ( AXI_DATA_WIDTH  ),
     .AXI4_ID_WIDTH       ( AXI_ID_WIDTH    ),

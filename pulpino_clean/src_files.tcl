@@ -1,7 +1,21 @@
 # $RTL and $IPS are defined in the corresponding XCELIUM or GENUS scripts
 
 # components
+set SOURCES_ACCEL " \
+   $RTL/template_accelerator/keccak_globals.vhd \
+   $RTL/template_accelerator/keccak_buffer.vhd \
+   $RTL/template_accelerator/keccak_round_constants_gen.vhd \
+   $RTL/template_accelerator/keccak_round.vhd \
+   $RTL/template_accelerator/keccak.vhd \
+"
+
 set SOURCES " \
+   $RTL/template_accelerator/cfg_types_pkg.sv \
+   $RTL/template_accelerator/accel_wrapper.sv \
+   $RTL/template_accelerator/config_reg.sv   \
+   $RTL/template_accelerator/true_dp_ram.sv \
+   $RTL/template_accelerator/accel_top_wrapper.sv \
+   $RTL/template_accelerator/accel_fsm.sv \
    $RTL/rtl/components/pulp_clock_gating.sv \
    $RTL/rtl/components/cluster_clock_gating.sv \
    $RTL/rtl/components/cluster_clock_inverter.sv \

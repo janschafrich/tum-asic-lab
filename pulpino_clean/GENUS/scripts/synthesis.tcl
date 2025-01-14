@@ -36,6 +36,7 @@ source $root_path/src_files.tcl
 set_db init_hdl_search_path $INCLUDES
 read_hdl -mixvlog $SOURCES
 read_hdl -vhdl $SOURCES_VHDL_UART
+read_hdl -vhdl $SOURCES_ACCEL
 
 
 
