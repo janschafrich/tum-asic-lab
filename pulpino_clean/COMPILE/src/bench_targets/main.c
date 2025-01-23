@@ -26,7 +26,7 @@
 #define INPUT_LEN_BYTE      8      // HW: max 64
 #define OUTPUT_LEN_BYTE    16      // HW: max 64
 
-#define ENABLE_DEBUG        1
+#define ENABLE_DEBUG        0
        
 
 /* Declared globally such that variables are not on stack */

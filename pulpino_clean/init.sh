@@ -30,10 +30,10 @@ then
     source ../scripts/synthesis.tcl
 fi
 
-if [[ "$TASK" == "netlis" ]]
+if [[ "$TASK" == "physical" ]]
 then
     cd INNOVUS/work
     innovus
-    source ../scripts/phy_syn.tcl
+   # source ../scripts/phys_syn.tcl
 fi
 
