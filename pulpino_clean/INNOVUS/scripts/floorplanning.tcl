@@ -28,6 +28,7 @@ set ROUTING_TOP_METAL met5
 set CORE_LOGIC pulpino_top_inst_core_region_i
 set SPRAM_INSTR pulpino_top_inst/core_region_i/instr_mem_sp_ram_wrap_i_sp_ram_bank_i_bank0
 set SPRAM_DATA pulpino_top_inst/core_region_i/data_mem_sp_ram_bank_i_bank0
+set DPRAM_ACCEL pulpino_top_inst/accelerator_i_accel_wrapper_inst_ram_inst_dp_ram_i
 
 #########################
 ### Specify Floorplan ###
@@ -37,12 +38,15 @@ floorPlan -site unit -d 2499.84 2500.09 240 240.13 240 240.13 -coreMarginsBy die
 ### Place memory macros
 create_relative_floorplan -place $SPRAM_INSTR -ref_type core_boundary -horizontal_edge_separate "1 0 1" -vertical_edge_separate "2 0 2" -orient R0
 create_relative_floorplan -place $SPRAM_DATA  -ref_type core_boundary -horizontal_edge_separate "1 0 1" -vertical_edge_separate "0 0 0" -orient R0
+create_relative_floorplan -place $DPRAM_ACCEL -ref_type core_boundary -horizontal_edge_separate "3 0 3" -vertical_edge_separate "2 0 2" -orient R0
 
 snapFPlan -guide -block -stdCell -ioPad -pin -pinGuide -routeBlk -pinBlk -ptnCore -placeBlk -macroPin
 
-### Add placement halo
+### Add placement halo left bottom right top
 addHaloToBlock 20 20 0 0 $SPRAM_INSTR
 addHaloToBlock 0 20 20 0 $SPRAM_DATA
+# what do the numberes mean? distance at four sides?
+addHaloToBlock 0 20 20 0 $DPRAM_ACCEL
 
 #################################
 ### Connect global power nets ###

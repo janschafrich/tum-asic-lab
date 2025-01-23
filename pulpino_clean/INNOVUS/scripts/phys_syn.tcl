@@ -16,6 +16,7 @@ source ../scripts/floorplanning.tcl
 ####################
 dbSet [ dbGet -p top.insts.name $SPRAM_INSTR].pStatus FIXED
 dbSet [ dbGet -p top.insts.name $SPRAM_DATA].pStatus FIXED
+dbSet [ dbGet -p top.insts.name $DPRAM_ACCEL].pStatus FIXED
 
 ### Place standard cells
 setOptMode -fixFanoutLoad true -setupTargetSlack 0.05 -holdTargetSlack 0.04
@@ -30,6 +31,9 @@ set_analysis_view  -setup {func_view_tc func_view_wc} -hold {func_view_tc func_v
 setAnalysisMode -cppr both
 # TASK: Define non-default routing rule 
 # FOR TRUNK:
+add_ndr -name CTS_2W2S -width_multiplier {met1:met5 2} -spacing_multiplier {met1:met5 2} -generate_via
+add_ndr -name CTS_2W1S -width_multiplier {met1:met5 2} -generate_via
+# create_route_type -non_default_rule CTS_2W2S -name 
 # FOR LEAF:
 
 # create a routing type for CTS
@@ -51,6 +55,10 @@ refinePlace
 checkPlace
 checkFiller
 addFiller -prefix FILLER
+
+## checkpoint 16.01.2025
+
+
 
 ####################
 ##    Routing     ##
@@ -103,6 +111,8 @@ verifyProcessAntenna -report ../reports/antenna.rpt
 verifyACLimit -report ../reports/aclimit.rpt -detailed -toggle 1.0
 verify_PG_short
 checkFiller
+
+## checkpoint 21.01.
 
 ### Write output and reports
 reportGateCount -outfile ../reports/gatecount.rpt
