@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-// @file     example_add.sv
-// @brief    Example adder for accelerator template
-// @author   Patrick Karl <patrick.karl@tum.de>
+// @file     accel_fsm.sv
+// @brief    Accelerator Fintie State Machine
+// @author   Jan-Eric Schäfrich
 // @license  TBD
 ///////////////////////////////////////////////////////////////////////////////
 

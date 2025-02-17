@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-// @file     tb_accelerator_template.sv
-// @brief    Testbench for the accelerator template
-// @author   Jan-Eric Schäfrich <patrick.karl@tum.de>
+// @file     tb_accel_wrapper.sv
+// @brief    Testbench for the accelerator wrapper
+// @author   Jan-Eric Schäfrich
 // @license  TBD
 ///////////////////////////////////////////////////////////////////////////////
 
